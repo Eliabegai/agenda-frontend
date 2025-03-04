@@ -1,12 +1,10 @@
 import Pagina from '@/components/Template/Pagina';
-import { ModeToggle } from '@/components/ModeToggle/modeToggler';
 
-export default function Home() {
+export default function Agenda() {
   return (
     <Pagina>
       <div>
         <h1>Agenda</h1>
-        <ModeToggle />
       </div>
     </Pagina>
   );
