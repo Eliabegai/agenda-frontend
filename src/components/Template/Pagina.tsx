@@ -34,10 +34,10 @@ const Pagina = (props: PaginaProps) => {
   }
 
   return (
-    <div className="flex flex-col m-auto px-4 py-2 w-full h-screen">
+    <div className="flex flex-col m-auto px-4 py-2 w-full h-screen absolute">
       <header className="flex border-b-2 px-4 pt-4 pb-1 justify-between items-center">
         <div className='text-2xl flex items-center space-x-2'>
-          <FontAwesomeIcon icon={faCalendarDays} color='var(--color-cyan-500)' />
+          <FontAwesomeIcon icon={faCalendarDays} color='(--background-azul)' />
           <h1 className='text-3xl font-bold'>Agenda de Trabalho</h1>
         </div>
         <div className='space-x-2'>
@@ -55,7 +55,7 @@ const Pagina = (props: PaginaProps) => {
         </div>
         </header>
       <div className="flex flex-row h-screen w-full mt-4 overflow-auto">
-        <aside className="flex flex-col w-72 h-svh border-r border-cyan-500 p-2 items-center text-sm gap-5">
+        <aside className="flex flex-col w-72 h-full border-r border-[var(--background-azul)] p-2 items-center text-sm gap-5">
           
           <div className="flex w-full items-center justify-center">
             <Calendar mode="single" className="border w-auto h-auto shadow-lg shadow-primary/20 rounded-4xl" selected={date} onSelect={setDate} />
@@ -83,7 +83,7 @@ const Pagina = (props: PaginaProps) => {
           </div>
 
         </aside>
-        <main className="flex flex-col flex-1 justify-center items-center">{props.children}</main>
+        <main className="flex flex-col flex-1 justify-center items-center aboslute">{props.children}</main>
       </div>
     </div>
   );
