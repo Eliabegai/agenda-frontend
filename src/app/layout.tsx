@@ -5,6 +5,7 @@ import { ThemeProvider } from '@/components/theme-provider';
 import { config } from '@fortawesome/fontawesome-svg-core';
 import '@fortawesome/fontawesome-svg-core/styles.css';
 import { Toaster } from '@/components/ui/sonner';
+import { ContextProvider } from '@/components/hooks/PageContext';
 
 config.autoAddCss = false;
 
@@ -26,8 +27,10 @@ export default function RootLayout({
     <html lang="pt-BR" suppressHydrationWarning>
       <body className={`${inter} antialiased`}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <main>{children}</main>
-          <Toaster />
+          <ContextProvider>
+            <main>{children}</main>
+            <Toaster />
+          </ContextProvider>
         </ThemeProvider>
       </body>
     </html>

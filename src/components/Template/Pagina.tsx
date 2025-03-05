@@ -1,12 +1,10 @@
-'use client';
-import React, { ReactNode, useState } from 'react';
+import React, { ReactNode } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faMagnifyingGlass, faCalendarDays, faUser } from '@fortawesome/free-solid-svg-icons';
-import { Calendar } from '../ui/calendar';
-import { Input } from '../ui/input';
+import { faCalendarDays, faUser } from '@fortawesome/free-solid-svg-icons';
 import { Button } from '../ui/button';
 import { ModeToggle } from '../ModeToggle/modeToggler';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
+import Sidebar from './Sidebar';
 
 type PaginaProps = {
   children: ReactNode;
@@ -14,24 +12,6 @@ type PaginaProps = {
 };
 
 const Pagina = (props: PaginaProps) => {
-  const [date, setDate] = useState<Date | undefined>(new Date());
-  const [funcionario, setFuncionario] = useState<string>('');
-  
-  const handleClick = () => {
-    if(funcionario)
-      alert(`Buscar Funcionario ${funcionario} no banco de dados.`)
-    return
-  }
-  const handleClickFuncionario = () => {
-    alert(`Gerenciar Funcionarios.`)
-  }
-
-  const gerarFuncionarios = () => {
-    return Array.from({length: 10}, (_, id) => ({
-      id: id+1,
-      nome: `Funcionario ${id + 1}`
-    }))
-  }
 
   return (
     <div className="flex flex-col m-auto px-4 py-2 w-full h-screen absolute">
@@ -55,35 +35,8 @@ const Pagina = (props: PaginaProps) => {
         </div>
         </header>
       <div className="flex flex-row h-screen w-full mt-4 overflow-auto">
-        <aside className="flex flex-col w-72 h-full border-r border-[var(--background-azul)] p-2 items-center text-sm gap-5">
-          
-          <div className="flex w-full items-center justify-center">
-            <Calendar mode="single" className="border w-auto h-auto shadow-lg shadow-primary/20 rounded-4xl" selected={date} onSelect={setDate} />
-          </div>
-          
-          <div className='flex w-full justify-center items-center'>
-            <Button onClick={handleClickFuncionario} className="">Gerenciar Funcionarios</Button>
-          </div>
-          
-          <div className="flex w-64 mt-4 items-center py-2 px-3 space-x-1">
-            <Input type="text" placeholder="Buscar Funcionario" value={funcionario} onChange={(e) => setFuncionario(e.target.value)} />
-            <Button onClick={handleClick}><FontAwesomeIcon icon={faMagnifyingGlass} /></Button>
-          </div>
-          
-          <div className="flex flex-col w-full gap-1 border rounded-md py-6 overflow-auto">
-            <ul className="border-r border-gray-400">
-              {
-                gerarFuncionarios().map((i) => {
-                  return(
-                    <li key={i.id} className="mt-2 ml-2 border-b p-2 hover:bg-secondary">{i.nome}</li>
-                  )
-                })
-              }
-            </ul>
-          </div>
-
-        </aside>
-        <main className="flex flex-col flex-1 justify-center items-center aboslute">{props.children}</main>
+        <Sidebar />
+        <main className="flex flex-col flex-1 justify-center items-center ml-72">{props.children}</main>
       </div>
     </div>
   );
