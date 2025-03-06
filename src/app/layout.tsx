@@ -26,10 +26,10 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" suppressHydrationWarning>
       <body className={`${inter} antialiased`}>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
           <ContextProvider>
             <main>{children}</main>
-            <Toaster />
+            <Toaster richColors />
           </ContextProvider>
         </ThemeProvider>
       </body>

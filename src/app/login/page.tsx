@@ -13,6 +13,7 @@ import imagem from '../../assets/image.png'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheck, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { useRouter } from 'next/navigation';
+import { ModeToggle } from '@/components/ModeToggle/modeToggler';
 
 const FormSchema = z.object({
     email: z.string().email({ message: "Invalid email address" }),
@@ -31,7 +32,7 @@ export default function Agenda() {
     const { errors } = form.formState
 
     const onSubmit = (data: z.infer<typeof FormSchema>) => {
-        toast("Bem Vindo!", {
+        toast.success("Bem Vindo!", {
             description: (
                 <div>
                     <h3>{data?.email}</h3>
@@ -43,6 +44,7 @@ export default function Agenda() {
 
     return (
         <div className='flex flex-col m-auto p-2 w-full h-screen justify-center items-center'>
+            <div className='fixed right-3 top-2'><ModeToggle/></div>
             <div className='flex flex-row w-full max-w-[1440px] h-full md:h-full justify-center items-center p-5'>
                 <div className='w-1/2 h-full md:flex hidden relative rounded-l-2xl'>
                     <Image src={imagem} alt='agenda' fill quality={75} className='w-1/2' />
@@ -114,7 +116,7 @@ export default function Agenda() {
                                         </FormItem>
                                     )}
                                 />
-                                <Button type='submit' className='bg-(--background-azul) text-white font-normal' variant={'outline'} >Submit</Button>
+                                <Button type='submit' className='bg-(--background-azul) hover:bg-(--background-hover-azul) text-white hover:text-zinc-100 font-normal' variant={'outline'} >Submit</Button>
                             </form>
                         </Form>
                     </div>
