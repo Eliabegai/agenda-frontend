@@ -19,7 +19,7 @@ export default function RootLayout({
     <html lang="pt-BR" suppressHydrationWarning>
       <body className={`${inter} antialiased`}>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
-          <main>{children}</main>
+          {children}
           <Toaster />
         </ThemeProvider>
       </body>

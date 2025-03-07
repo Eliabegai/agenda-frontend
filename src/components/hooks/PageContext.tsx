@@ -10,10 +10,18 @@ interface CurrentDateContextProps {
 
 interface CurrentClienteContextProps {
   cliente: string
+  role: string
   setCliente: (nome: string) => void
+  setRole: (role: string) => void
   getToken: () => string | null
   saveToken: (token: string) => void
-  
+}
+
+interface CurrentAdminOrUser {
+  role: string
+  nome: string
+  email: string
+  token: string
 }
 
 const CurrentDateContext = createContext<CurrentDateContextProps | undefined>(undefined);
@@ -23,6 +31,7 @@ const CurrentClienteContext = createContext<CurrentClienteContextProps | undefin
 export const ContextProvider = ({ children }: { children: ReactNode }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [cliente, setClienteState] = useState('')
+  const [role, setRoleState] = useState('cliente')
 
   useEffect(() => {
     const storadCliente = localStorage.getItem('cliente')
@@ -48,9 +57,13 @@ export const ContextProvider = ({ children }: { children: ReactNode }) => {
     return sessionStorage.getItem('token')
   }
 
+  const setRole = (role: string) => {
+    setRoleState(role)
+  }
+
   return (
     <CurrentDateContext.Provider value={{ currentDate, setCurrentDate, changeWeek }}>
-      <CurrentClienteContext.Provider value={{ cliente, setCliente, getToken, saveToken }}>
+      <CurrentClienteContext.Provider value={{ cliente, role, setCliente, setRole, getToken, saveToken }}>
         {children}
       </CurrentClienteContext.Provider>
     </CurrentDateContext.Provider>
