@@ -47,7 +47,7 @@ export default function Agenda() {
             <div className='fixed right-3 top-2'><ModeToggle/></div>
             <div className='flex flex-row w-full max-w-[1440px] h-full md:h-full justify-center items-center p-5'>
                 <div className='w-1/2 h-full md:flex hidden relative rounded-l-2xl'>
-                    <Image src={imagem} alt='agenda' fill quality={75} className='w-1/2' />
+                    <Image src={imagem} alt='agenda' fill quality={75} className='w-1/2 dark:brightness-75' />
                 </div>
 
                 <div className='flex flex-col w-full h-full md:flex-1 max-w-xl p-8 justify-center items-center space-y-5 rounded-r-xl shadow-lg'>

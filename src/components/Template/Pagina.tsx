@@ -1,3 +1,4 @@
+'use client'
 import React, { ReactNode } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCalendarDays, faUser } from '@fortawesome/free-solid-svg-icons';
@@ -5,6 +6,7 @@ import { Button } from '../ui/button';
 import { ModeToggle } from '../ModeToggle/modeToggler';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
 import Sidebar from './Sidebar';
+import SidebarCliente from './SidebarCliente';
 
 type PaginaProps = {
   children: ReactNode;
@@ -35,7 +37,8 @@ const Pagina = (props: PaginaProps) => {
         </div>
         </header>
       <div className="flex flex-row h-screen w-full mt-4 overflow-auto">
-        <Sidebar />
+        {/* <Sidebar /> */}
+        <SidebarCliente />
         <main className="flex flex-col flex-1 justify-center items-center ml-72">{props.children}</main>
       </div>
     </div>
