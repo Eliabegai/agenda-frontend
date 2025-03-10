@@ -6,22 +6,23 @@ import { ChevronLeft, ChevronRight, Eye, Pencil } from "lucide-react";
 import { format, addDays, startOfWeek } from "date-fns";
 import { ptBR } from "date-fns/locale/pt-BR";
 import { useCurrentDate } from '../hooks/PageContext';
-import { toast } from 'sonner';
-import { api } from '../../../api.js'
-import { Modal } from '../Dialog/Modal';
 import VisualizarAgenda from './VisualizaraAgenda';
+import { Modal } from '../Dialog/Modal';
+import { api } from '../../../api.js'
+import { toast } from 'sonner';
+import { agendamentosMockFuncionario } from './agendamentosMock';
 
 const daysOfWeek = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"];
+
 
 interface DateInfo {
   dayOfWeek: string;
   dayOfMonth: string;
   dayOfMonthNumber: number;
   month: string;
-  fullDate: string
 }
 
-export interface IAgendamento {
+interface Agendamento {
   id: string;
   protocoloId: string;
   dataHora: string;
@@ -31,16 +32,15 @@ export interface IAgendamento {
   userId: string;
 }
 
-export default function AgendaGeral() {
+export default function AgendaFuncionario() {
   const { currentDate, changeWeek} = useCurrentDate()
   const [dates, setDates] = useState<DateInfo[]>([])
   const [mesAtual, setMesAtual] = useState('')
   const [horarios, setHorarios] = useState<string[]>([])
-  const [agendamentos, setAgendamentos] = useState<IAgendamento[]>([]);
-  const [agendamentosPorHorario, setAgendamentosPorHorario] = useState<{ [key: string]: number }>({});
   const [openForm, setOpenForm] = useState(false)
-  const [agendamentosFiltrados, setAgendamentosFiltrados] = useState<IAgendamento[]>([]);
-
+  const [horaAgendamento, setHoraAgendamento] = useState<string[]>([])
+  const [agendamentos, setAgendamentos] = useState<Agendamento[]>([]);
+  const [agendamentosPorHorario, setAgendamentosPorHorario] = useState<{ [key: string]: number }>({});
 
   const gerarHorarios = (horaInicio:string, horaFim:string, intervalo:number) => {
     const horarios = [];
@@ -75,18 +75,7 @@ export default function AgendaGeral() {
     }
   }
 
-  const getAgendamentosPorDataHora = async (dataHora: string) => {
-    try {
-      const response = await api.get(`/agendamentos?dataHora=${dataHora}:00`);
-      setAgendamentosFiltrados(response.data);
-      setOpenForm(true);
-    } catch (error) {
-      console.error('Erro ao buscar os dados', error);
-      toast.error('Erro ao buscar os dados');
-    }
-  };
-
-  const agruparAgendamentosPorHorario = (agendamentos: IAgendamento[]) => {
+  const agruparAgendamentosPorHorario = (agendamentos: Agendamento[]) => {
     const agendamentosAgrupados: { [key: string]: number } = {};
 
     agendamentos.forEach(agendamento => {
@@ -104,6 +93,7 @@ export default function AgendaGeral() {
     setAgendamentosPorHorario(agendamentosAgrupados);
   };
 
+
   useEffect(()=>{
     const startDate = startOfWeek(currentDate, { weekStartsOn: 0 })
     
@@ -114,7 +104,6 @@ export default function AgendaGeral() {
         dayOfMonth: format(newDate, "d"),
         month: format(newDate, "MMMM", { locale: ptBR }),
         dayOfMonthNumber: newDate.getDay(),
-        fullDate: format(newDate, 'yyyy-MM-dd')
       }
     })
     
@@ -128,12 +117,13 @@ export default function AgendaGeral() {
     agruparAgendamentosPorHorario(agendamentos);
   }, [agendamentos]);
 
-  const handleVieweAgendamento = (hora: string, quantidadeAgendamentos: number, dataHora: string) => {
-    toast.info(`${quantidadeAgendamentos} - ${hora}`)
-    getAgendamentosPorDataHora(dataHora)
+  const handleClickForm = (hora: string, day: string, month: number) => {
+    const year = new Date().getFullYear()
+    const agendamento = [hora, `${year}-${month+1}-${day}`]
+    setHoraAgendamento(agendamento)
     setOpenForm(!openForm)
   }
-
+  
   return (
     <div className="flex flex-col w-full p-4 rounded-xl shadow-md left-0 top-0 absolute">
       <div className="flex justify-end items-center space-x-2 px-2 sticky top-0 z-10 bg-primary-foreground">
@@ -142,14 +132,14 @@ export default function AgendaGeral() {
         <Button variant="ghost" onClick={() => changeWeek(1)}><ChevronRight /></Button>
       </div>
 
-      <Modal open={openForm} openChange={() => setOpenForm(!openForm)} title='Visualizar Agendar'>
-        <VisualizarAgenda agendamentos={agendamentosFiltrados} />
+      <Modal open={openForm} openChange={() => setOpenForm(!openForm)} title='Agendar Horário'>
+        {/* <VisualizarAgenda /> */}
       </Modal>
 
-      <div className="flex flex-col h-full">
-        <table className="w-full border-separate border-spacing-1 p-2 items-center">
-          <thead className='sticky top-9 z-10 bg-primary-foreground'>
-            <tr>
+        <div className="flex flex-col h-full">
+          <table className="w-full border-separate border-spacing-1 p-2 items-center">
+            <thead className='sticky top-9 z-10 bg-primary-foreground'>
+              <tr>
               {dates.map((dia, i) => (
                 <th key={i} className={`
                   text-center rounded-md
@@ -162,52 +152,54 @@ export default function AgendaGeral() {
                   </div>
                 </th>
               ))}
-            </tr>
-          </thead>
-          {/* <tbody>
-            { horarios.map((hora, i) => (
-              <tr key={i}>
-                {dates.map((dia, j) => (
-                  <td key={j} className={`
-                    text-center border p-2 rounded-lg font-normal hover:bg-primary-foreground
-                    ${dia.dayOfWeek === "Dom" ? "opacity-30" : "opacity-100"}
-                    ${agendamentosMockGeral?.[i]?.[j] > 4 ? "bg-red-300 hover:bg-red-500 dark:bg-red-700 dark:hover:bg-red-600" : ""}
-                  `}>
-                    <div  className='flex flex-row w-full justify-between items-center space-x-2'>
-                      <div className='flex flex-col text-xs'>
-                        <span>{hora}</span>
-                        <span>Agendados</span>
-                      </div>
-                      {
-                        (dia.dayOfWeek === "domingo") ? (
-                          <span className='text-xl font-normal'>-------</span>
-                        ) : (
-                          <>
-                            <span className='font-normal'>{dia.dayOfWeek === "Dom" ? "---" : agendamentosMockGeral?.[i]?.[dia.dayOfMonthNumber]}</span>
-                            <Button 
-                              disabled={dia.dayOfWeek === "Dom" || agendamentosMockGeral?.[i]?.[j] > 4} 
-                              size={'icon'} 
-                              onClick={() => toast.info(`Agendado: ${hora}`)}
-                              className='bg-zinc-700 hover:bg-zinc-600 dark:bg-zinc-300 dark:hover:bg-zinc-200'
-                            >
-                              <Pencil size={12} />
-                            </Button>
-                          </>
-                        )
-                      }
-                    </div>
-                  </td>
-                ))}
               </tr>
-            ))}
-          </tbody> */}
-          <tbody>
+            </thead>
+            {/* <tbody>
+              { horarios.map((hora, i) => (
+                <tr key={i}>
+                  {dates.map((dia, j) => (
+                    <td 
+                      key={j} 
+                      data-inative={dia.dayOfWeek === "Dom"}
+                      data-inativeDay={(agendamentosMockFuncionario?.[i]?.[j] === 1)}
+                      className={`
+                        text-center border p-2 rounded-lg font-normal hover:bg-primary-foreground
+                        data-[inative=true]:opacity-30
+                        data-[inativeDay=true]:bg-green-400 data-[inativeDay=true]:hover:bg-green-500
+                        data-[inativeDay=true]:dark:bg-green-700 data-[inativeDay=true]:dark:hover:bg-green-600
+                        data-[inativeDay=false]:opacity-30 data-[inativeDay=false]:bg-zinc-100 data-[inativeDay=false]:dark:bg-zinc-800
+                    `}>
+                      <div className='flex flex-row w-full justify-center items-center space-x-2'>
+                        <div className='flex flex-row space-x-1 text-sm justify-center items-center'>
+                          <span>{hora}</span>
+                          {(dia.dayOfWeek !== "Dom") &&
+                            <span className='text-xs'>Agendado</span>
+                          }
+                        </div>
+                        {
+                          (dia.dayOfWeek !== "Dom") &&
+                              <Button 
+                                disabled={dia.dayOfWeek === "Dom" ||  (agendamentosMockFuncionario?.[i]?.[j] === 0)} 
+                                size={'icon'} 
+                                onClick={() => handleClickForm(hora, dia.dayOfMonth, dia.dayOfMonthNumber)}
+                                className='bg-zinc-700 dark:bg-zinc-300 dark:hover:bg-zinc-200'
+                              >
+                                <Eye size={12} />
+                              </Button>
+                          }
+                      </div>
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody> */}
+
+            <tbody>
               { horarios.map((hora, i) => (
                 <tr key={i}>
                   {
                     dates.map((dia, j) => {
-                      // const chave = `${format(currentDate, 'yyyy-MM-dd')} ${hora}`
-                      const chave = `${dia.fullDate} ${hora}`
+                      const chave = `${format(currentDate, 'yyyy-MM-dd')} ${hora}`
                       const quantidadeAgendamentos = agendamentosPorHorario[chave] || 0
 
                       return (
@@ -215,9 +207,8 @@ export default function AgendaGeral() {
                           key={j}
                           className={`
                             text-center border p-2 rounded-lg font-normal hover:bg-primary-foreground
-                            ${dia.dayOfWeek === "Dom" ? " bg-zinc-200 opacity-30" : "opacity-100"}
-                            ${quantidadeAgendamentos >= 1 ? "bg-blue-300 hover:bg-blue-500 dark:bg-blue-700 dark:hover:bg-blue-600" : ""}
-                            ${quantidadeAgendamentos >= 4 ? "bg-red-300 hover:bg-red-500 dark:bg-red-700 dark:hover:bg-red-600" : ""}
+                            ${dia.dayOfWeek === "Dom" ? "opacity-30" : "opacity-100"}
+                            ${quantidadeAgendamentos > 4 ? "bg-red-300 hover:bg-red-500 dark:bg-red-700 dark:hover:bg-red-600" : ""}
                         `}
                         >
                           <div className='flex flex-row w-full justify-between items-center space-x-2'>
@@ -232,12 +223,12 @@ export default function AgendaGeral() {
                                   <>
                                     <span className='font-normal'>{dia.dayOfWeek === "Dom" ? "---" : <span className='text-2xl text-b'>{quantidadeAgendamentos}</span>}</span>
                                     <Button
-                                      disabled={dia.dayOfWeek === "Dom" || quantidadeAgendamentos === 0}
+                                      disabled={dia.dayOfWeek === "Dom" || quantidadeAgendamentos > 4}
                                       size={'icon'}
-                                      onClick={() => handleVieweAgendamento(hora, quantidadeAgendamentos, chave)}
+                                      onClick={() => toast.info(`Agendado: ${hora}`)}
                                       className='bg-zinc-700 hover:bg-zinc-600 dark:bg-zinc-300 dark:hover:bg-zinc-200'
                                     >
-                                      <Eye size={12} />
+                                      <Pencil size={12} />
                                     </Button>
                                   </>
                                 )
@@ -250,8 +241,8 @@ export default function AgendaGeral() {
                 </tr>
               ))}
             </tbody>
-        </table>
-      </div>
+          </table>
+        </div>
     </div>
   );
 }

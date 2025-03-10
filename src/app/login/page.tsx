@@ -14,28 +14,87 @@ import { faCheck, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { useRouter } from 'next/navigation';
 import { ModeToggle } from '@/components/ModeToggle/modeToggler';
 import Link from 'next/link';
+import { useEffect } from 'react';
+import { useCurrentAdminOrUser, useCurrentCliente } from '@/components/hooks/PageContext';
 
 const FormSchema = z.object({
   email: z.string().email({ message: "Invalid email address" }),
+  nome: z.string().optional(),
   password: z.string().min(5,{message: "Mínimo 5 caracteres"})
+}).refine((data) => (data.email === admin.email && data.password === admin.password) || (data.email === user.email && data.password === user.password),{
+  message: "Email ou senha inválidos",
+  path: ['email']
 })
+
+const admin = {
+  email: "eliabe.gai@email.com",
+  nome: "Eliabe Gai",
+  password: "12345"
+}
+const user = {
+  email: "user.123@email.com",
+  nome: "Funcionario Teste",
+  password: "12345"
+}
+
 export default function Agenda() {
 
   const router = useRouter()
+  const { setEmail, setNome, setRole, getToken, saveToken, getUserData } = useCurrentAdminOrUser()
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
       email: "",
+      nome: "",
       password: ""
     }
   })
   const { errors } = form.formState
 
+  useEffect(() => {
+    const token = getToken()
+    if(token) {
+      const userData = getUserData()
+      if(userData) {
+        setNome(userData?.nome)
+        setRole(userData?.role)
+        setEmail(userData?.email)
+      }
+    }
+  }, []);
+
+  const saveInStorage = (nome: string, role: string, email:string, token: string) => {
+    const storageItens = { 'user': nome, 'role': role, 'email': email }
+    localStorage.setItem('user', JSON.stringify(storageItens))
+    saveToken(token)
+  }
+
   const onSubmit = (data: z.infer<typeof FormSchema>) => {
+
+    if (data.email === admin.email) {
+      form.setValue("nome", admin.nome);
+      setNome(admin.nome)
+      setRole('admin')
+      setEmail(admin.email)
+      
+      saveInStorage(admin.nome, 'admin', admin.email, "TokenValidoAqui")
+
+    } else if (data.email === user.email) {
+      form.setValue("nome", user.nome);
+      setNome(user.nome)
+      setRole('user')
+      setEmail(user.email)
+
+      saveInStorage(user.nome, 'user', user.email, "TokenValidoAqui")
+
+    } else {
+      form.setValue("nome", "");
+    }
+
     toast.success("Bem Vindo!", {
       description: (
         <div>
-          <h3>{data?.email}</h3>
+          <h3>{data?.nome}</h3>
         </div>
       )
     })

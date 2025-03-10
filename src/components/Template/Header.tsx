@@ -6,12 +6,27 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Button } from '../ui/button';
 import { ModeToggle } from '../ModeToggle/modeToggler';
 import { useRouter } from 'next/navigation';
+import { useCurrentAdminOrUser } from '../hooks/PageContext';
+import { useEffect, useState } from 'react';
 
 const Header = () => {
+  const { getToken, Logout } = useCurrentAdminOrUser()
   const router = useRouter()
+  const [token, setToken] = useState<string|null>(null)
+  
+  useEffect(() => {
+    const response = getToken()
+    setToken(response)
+  },[])
   const handleLogin = () => {
     router.push('/login')
   }
+  
+  const handleLogout = () => {
+    Logout()
+    router.push('/login')
+  }
+
   return(
     <header className="flex border-b-2 px-4 pt-4 pb-1 justify-between items-center">
       <div className='text-2xl flex items-center space-x-2'>
@@ -26,7 +41,7 @@ const Header = () => {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
-            <DropdownMenuItem onClick={handleLogin}>Login</DropdownMenuItem>
+            <DropdownMenuItem onClick={token ? handleLogout :handleLogin}>{token ? "Logout" : "Login"}</DropdownMenuItem>
             <DropdownMenuItem onClick={() => alert('Editar Perfil')}>Editar Perfil</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

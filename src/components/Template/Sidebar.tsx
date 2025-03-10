@@ -5,7 +5,7 @@ import { Calendar } from '../ui/calendar';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { useCurrentCliente, useCurrentDate } from '../hooks/PageContext';
+import { useCurrentAdminOrUser, useCurrentCliente, useCurrentDate } from '../hooks/PageContext';
 
 
 
@@ -79,12 +79,13 @@ const Sidebar = () => {
 const SidebarCliente = () => {
     const { currentDate, setCurrentDate} = useCurrentDate()
     const { cliente } = useCurrentCliente()
+    const { nome, role } = useCurrentAdminOrUser()
 
-      const handleDateChange = (date: Date | undefined) => {
-        if(date) {
-          setCurrentDate(date)
-        }
+    const handleDateChange = (date: Date | undefined) => {
+      if(date) {
+        setCurrentDate(date)
       }
+    }
 
     return(
         <aside className="flex flex-col fixed top-20 left-0 w-72 h-full border-r border-[var(--background-azul)] p-2 items-center text-sm gap-3 overflow-auto">
@@ -103,10 +104,21 @@ const SidebarCliente = () => {
             {/* Cliente ao entrar no site, solicitar o nome dele para colocar no campo Cliente, depois quando preecher o formulário, já deixar o nome dele lá preenchido. */}
           
           {
-            cliente &&
+            role &&
             <div className='flex flex-col justify-start w-full p-2 ml-10 mt-6 space-y-4'>
-                <span>Bem vindo,</span>
-                <h2 className='text-lg font-semibold'>{cliente}</h2>
+              {
+                role === 'user' ? (
+                  <div>
+                    <span>Bem vindo,</span>
+                    <h2 className='text-lg font-semibold'>{nome}</h2>
+                  </div>
+                ) : (
+                  <div>
+                    <span>Bem vindo,</span>
+                    <h2 className='text-lg font-semibold'>{cliente}</h2>
+                  </div>
+                )
+              }
             </div>
           }
 

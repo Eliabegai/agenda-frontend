@@ -13,38 +13,9 @@ import FormularioAgenda from './FormularioAgenda';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { agendamentosMockGeral } from './agendamentosMock';
 
 const daysOfWeek = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"];
-
-const agendamentosMock = [
-    [0, 2, 6, 2, 3, 2, 0], // 07:00
-    [0, 6, 0, 0, 1, 0, 0], // 07:30
-    [0, 2, 6, 2, 6, 2, 6], // 08:00
-    [0, 0, 0, 6, 1, 6, 5], // 08:30
-    [0, 6, 6, 2, 3, 2, 4], // 09:00
-    [0, 6, 0, 0, 1, 3, 5], // 09:30
-    [0, 2, 6, 2, 3, 6, 6], // 10:00
-    [0, 6, 0, 6, 1, 6, 6], // 10:30
-    [0, 6, 6, 6, 3, 2, 0], // 11:00
-    [0, 0, 0, 3, 6, 0, 4], // 11:30
-    [0, 6, 6, 2, 3, 2, 6], // 12:00
-    [0, 4, 2, 0, 1, 6, 0], // 12:30
-    [0, 2, 6, 2, 3, 2, 0], // 13:00
-    [0, 6, 0, 6, 1, 6, 7], // 13:30
-    [0, 2, 6, 2, 3, 2, 0], // 14:00
-    [0, 6, 0, 6, 1, 0, 3], // 14:30
-    [0, 0, 0, 6, 1, 0, 0], // 15:00
-    [0, 6, 6, 6, 1, 0, 2], // 15:30
-    [0, 0, 0, 5, 1, 0, 0], // 16:00
-    [0, 0, 6, 0, 1, 0, 0], // 16:30
-    [0, 0, 0, 0, 1, 0, 0], // 17:00
-    [0, 0, 0, 3, 1, 0, 6], // 17:30
-    [0, 0, 0, 0, 1, 0, 0], // 18:00
-    [0, 2, 0, 0, 1, 0, 0], // 18:30
-    [0, 0, 0, 0, 1, 0, 8], // 19:00
-    [0, 7, 3, 3, 1, 0, 0], // 19:30
-    [0, 0, 0, 0, 1, 0, 0], // 20:00
-  ];
 
 interface DateInfo {
   dayOfWeek: string;
@@ -130,8 +101,6 @@ export default function AgendaCliente() {
       protocolo: ''
     }
   })
-  const errors = form.formState.errors
-
 
   const handleClickDialog = () => {
     setCliente(nome)
@@ -155,14 +124,19 @@ export default function AgendaCliente() {
     return dataHora.toISOString()
   }
   
-  const handleSubmit = (data: z.infer<typeof FormSchema>) => {
+  const handleSubmit = () => {
     const newdata = form.getValues()
-    console.log(newdata)
 
-    toast.success('Agendado com sucesso!')
+    toast.success('Agendamento realizado com sucesso!',{
+      description: (
+        <span>Você receberá um e-mail de confirmação.</span>
+      ),
+      duration: 5000,
+      position: 'top-right',
+    })
     setOpenForm(false)
   }
-
+  
   return (
     <div className="flex flex-col w-full p-4 rounded-xl shadow-md left-0 top-0 absolute">
       <div className="flex justify-end items-center space-x-2 px-2 sticky top-0 z-10 bg-primary-foreground">
@@ -209,10 +183,16 @@ export default function AgendaCliente() {
               { horarios.map((hora, i) => (
                 <tr key={i}>
                   {dates.map((dia, j) => (
-                    <td key={j} className={`
+                    <td 
+                      key={j} 
+                      data-inative={dia.dayOfWeek === "Dom"}
+                      data-inativeDay={(agendamentosMockGeral?.[i]?.[j] > 0) && (agendamentosMockGeral?.[i]?.[j] < 4)}
+                      className={`
                         text-center border p-2 rounded-lg font-normal hover:bg-primary-foreground
-                        ${dia.dayOfWeek === "Dom" ? "opacity-30" : "opacity-100"}
-                        ${(agendamentosMock?.[i]?.[j] > 0) && (agendamentosMock?.[i]?.[j] < 4) ? "bg-green-300 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-700" : "opacity-30"}
+                        data-[inative=true]:opacity-30
+                        data-[inativeDay=true]:bg-green-400 data-[inativeDay=true]:hover:bg-green-500
+                        data-[inativeDay=true]:dark:bg-green-700 data-[inativeDay=true]:dark:hover:bg-green-600
+                        data-[inativeDay=false]:opacity-30 data-[inativeDay=false]:bg-zinc-100 data-[inativeDay=false]:dark:bg-zinc-800
                     `}>
                       <div  className='flex flex-row w-full justify-between items-center space-x-2'>
                         <div className='flex flex-col text-lg'>
@@ -225,7 +205,7 @@ export default function AgendaCliente() {
                             <>
                               <span className='font-normal'>{dia.dayOfWeek === "Dom" ? "---" : ""}</span>
                               <Button 
-                                disabled={dia.dayOfWeek === "Dom" || (agendamentosMock?.[i]?.[j] > 0) && (agendamentosMock?.[i]?.[j] < 4)} 
+                                disabled={dia.dayOfWeek === "Dom" ||  (agendamentosMockGeral?.[i]?.[j] === 0) || (agendamentosMockGeral?.[i]?.[j] > 3)} 
                                 size={'icon'} 
                                 onClick={() => handleClickForm(hora, dia.dayOfMonth, dia.dayOfMonthNumber)}
                                 className='bg-zinc-700 dark:bg-zinc-300 dark:hover:bg-zinc-200'
