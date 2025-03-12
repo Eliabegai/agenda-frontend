@@ -1,8 +1,13 @@
 import { Ban, BanIcon, BlocksIcon, Pencil, Trash, User } from 'lucide-react'
 import { Button } from '../ui/button'
+import { toast } from 'sonner'
 
+interface CardUserProps {
+  funcionario: any
+  handleEditUser: (id:string) => void
+}
 
-const CardUser = ({ funcionario }: any) => {
+const CardUser = ({ funcionario, handleEditUser }: CardUserProps) => {
   return(
     <div key={funcionario.id} className='flex flex-row w-80 h-32 justify-center items-center space-x-2  p-2'>
       
@@ -16,9 +21,9 @@ const CardUser = ({ funcionario }: any) => {
           <span>{funcionario.email}</span>
         </div>
         <div className='flex justify-end items-end space-x-2'>
-          <Button variant={'default'} size={'icon'} className=''><Ban /></Button>
-          <Button variant={'default'} size={'icon'} className=''><Pencil /></Button>
-          <Button variant={'default'} size={'icon'} className=''><Trash /></Button>
+          <Button variant={'default'} size={'icon'} onClick={() => toast.info(`Click Indisponível user ${funcionario.nome}`)}><Ban /></Button>
+          <Button variant={'default'} size={'icon'} onClick={() => handleEditUser(funcionario.id)}><Pencil /></Button>
+          <Button variant={'default'} size={'icon'} onClick={() => toast.info(`Click Delete user ${funcionario.nome}`)}><Trash /></Button>
             
         </div>
       </div>

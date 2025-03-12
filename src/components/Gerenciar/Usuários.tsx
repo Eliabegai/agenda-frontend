@@ -10,12 +10,14 @@ import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { Modal } from '../Dialog/Modal'
 import FormUser from './FormUser'
+import FormEditUser from './FormEditUser'
 
 
 const Usuarios = () => {
   const router = useRouter()
   const { role, email, getToken } = useCurrentAdminOrUser()
   const [funcionarios, setFuncionarios] = useState<IFuncionario[]>([])
+  const [funcionario, setFuncionario] = useState<IFuncionario | null>(null)
   const url = process.env.NEXT_PUBLIC_API_URL
   const token = typeof window !== 'undefined' ? getToken() : null
   const [userFilter, setUserFilter] = useState('')
@@ -164,14 +166,37 @@ const Usuarios = () => {
     }
   }
 
-  const handleIndisponivel = async (id: string, body: any) => {}
+  const handleIndisponivel = async (id: string) => {}
 
-  const handleEditUser = async (id: string, body: any) => {}
+  const handleEditUser = async (id: string) => {
+    if (!token) {
+      toast.error('Token não encontrado');
+      return;
+    }
+
+    try{
+      const response = await fetch(`${url}/user/${id}`, {
+        method: 'GET',
+        headers: {
+          "Content-Type": "application/json",
+          'token': token,
+          'admin': email
+        },
+      })
+      const data = await response.json()
+      console.log(data)
+      setFuncionario(data.data)
+    } catch (error) {
+      console.error('Erro ao buscar os dados', error)
+      toast.error('Erro ao buscar os dados')
+    }
+  }
 
   const handleRemoveUser = async (id: string) => {}
 
   const onSubmitUser = async (body: any) => {
     setIsLoading(true)
+    setOpenEdit(!openEdit)
     if (!token) {
       toast.error('Token não encontrado');
       return;
@@ -217,6 +242,10 @@ const Usuarios = () => {
         <FormUser onSubmit={onSubmitUser} cancel={() => setOpenCreate(!openCreate)} />
       </Modal>
 
+      <Modal open={openEdit} openChange={() => setOpenEdit(!openEdit)} closeFooter>
+        <FormEditUser onSubmit={submitEditUser} cancel={() => setOpenEdit(!openEdit)} userData={funcionario} />
+      </Modal>
+
       <div className='flex flex-col w-full h-full'>
         
         <div className='flex w-full h-20 justify-between items-center px-2'>
@@ -237,7 +266,7 @@ const Usuarios = () => {
           {
             funcionarios &&
             funcionarios.map((funcionario) => (
-              <CardUser key={funcionario.id} funcionario={funcionario} />
+              <CardUser key={funcionario.id} funcionario={funcionario} handleEditUser={handleEditUser} />
             ))
           }
         </div>
