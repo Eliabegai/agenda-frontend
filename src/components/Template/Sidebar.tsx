@@ -6,6 +6,7 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useCurrentAdminOrUser, useCurrentCliente, useCurrentDate } from '../hooks/PageContext';
+import { useRouter } from 'next/navigation';
 
 
 
@@ -13,6 +14,7 @@ const Sidebar = () => {
 
     const [funcionario, setFuncionario] = useState<string>('');
     const { currentDate, setCurrentDate} = useCurrentDate()
+    const router = useRouter()
 
     const handleClick = () => {
         if(funcionario)
@@ -20,7 +22,7 @@ const Sidebar = () => {
         return
       }
       const handleClickFuncionario = () => {
-        alert(`Gerenciar Funcionarios.`)
+        router.push('/gerenciar')
       }
     
       const gerarFuncionarios = () => {
@@ -107,7 +109,7 @@ const SidebarCliente = () => {
             role &&
             <div className='flex flex-col justify-start w-full p-2 ml-10 mt-6 space-y-4'>
               {
-                role === 'user' ? (
+                role === 'USER' ? (
                   <div>
                     <span>Bem vindo,</span>
                     <h2 className='text-lg font-semibold'>{nome}</h2>

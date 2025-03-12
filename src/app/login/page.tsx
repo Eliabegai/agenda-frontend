@@ -15,32 +15,24 @@ import { useRouter } from 'next/navigation';
 import { ModeToggle } from '@/components/ModeToggle/modeToggler';
 import Link from 'next/link';
 import { useEffect } from 'react';
-import { useCurrentAdminOrUser, useCurrentCliente } from '@/components/hooks/PageContext';
+import { useCurrentAdminOrUser } from '@/components/hooks/PageContext';
+import decodeToken, { IToken } from '@/components/hooks/decodeToken';
 
 const FormSchema = z.object({
   email: z.string().email({ message: "Invalid email address" }),
   nome: z.string().optional(),
   password: z.string().min(5,{message: "Mínimo 5 caracteres"})
-}).refine((data) => (data.email === admin.email && data.password === admin.password) || (data.email === user.email && data.password === user.password),{
-  message: "Email ou senha inválidos",
-  path: ['email']
 })
 
-const admin = {
-  email: "eliabe.gai@email.com",
-  nome: "Eliabe Gai",
-  password: "12345"
-}
-const user = {
-  email: "user.123@email.com",
-  nome: "Funcionario Teste",
-  password: "12345"
+
+interface ILogin {
+  access_token: string
 }
 
 export default function Agenda() {
 
   const router = useRouter()
-  const { setEmail, setNome, setRole, getToken, saveToken, getUserData } = useCurrentAdminOrUser()
+  const { setEmail, setNome, setRole, setId, getToken, saveToken, getUserData } = useCurrentAdminOrUser()
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
@@ -59,46 +51,68 @@ export default function Agenda() {
         setNome(userData?.nome)
         setRole(userData?.role)
         setEmail(userData?.email)
+        setId(userData?.id)
       }
     }
   }, []);
 
-  const saveInStorage = (nome: string, role: string, email:string, token: string) => {
-    const storageItens = { 'user': nome, 'role': role, 'email': email }
+  const saveInStorage = (nome: string, role: string, email:string, id:string, token: string) => {
+    const storageItens = { 'user': nome, 'role': role, 'email': email, 'id': id }
     localStorage.setItem('user', JSON.stringify(storageItens))
     saveToken(token)
   }
 
-  const onSubmit = (data: z.infer<typeof FormSchema>) => {
+  const login = async (body: any) => {
+    const response = await fetch('http://localhost:3000/auth/login', { 
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body)
+     }).catch((error) => {
+      console.error(error)
+     })
 
-    if (data.email === admin.email) {
-      form.setValue("nome", admin.nome);
-      setNome(admin.nome)
-      setRole('admin')
-      setEmail(admin.email)
-      
-      saveInStorage(admin.nome, 'admin', admin.email, "TokenValidoAqui")
+     if(response?.status === 201) {
+      return response.json()
+     } else {
+      return null
+     }
+  }
 
-    } else if (data.email === user.email) {
-      form.setValue("nome", user.nome);
-      setNome(user.nome)
-      setRole('user')
-      setEmail(user.email)
+  const onSubmit = async (data: z.infer<typeof FormSchema>) => {
 
-      saveInStorage(user.nome, 'user', user.email, "TokenValidoAqui")
-
-    } else {
-      form.setValue("nome", "");
+    const body = {
+      "email": data.email,
+      "senha": data.password
     }
 
-    toast.success("Bem Vindo!", {
-      description: (
-        <div>
-          <h3>{data?.nome}</h3>
-        </div>
-      )
-    })
-    router.push('/agenda')
+    const response: ILogin = await login(body)
+
+    if(typeof response.access_token === "string") {
+      const token = response?.access_token
+      const decoded: IToken | null = decodeToken(token)
+      
+      if(decoded) {
+        setNome(decoded?.username)
+        setRole(decoded?.role)
+        setEmail(decoded?.email)
+        setId(decoded?.id)
+        saveInStorage(decoded?.username, decoded?.role, decoded?.email, decoded?.id, token)
+      }
+  
+      toast.success("Bem Vindo!", {
+        description: (
+          <div>
+            <h3>{decoded?.username}</h3>
+          </div>
+        )
+      })
+      router.push('/agenda')
+    } else {
+      toast.error('Usuário ou Senha incorretos!')
+    }
+
   }
 
   return (

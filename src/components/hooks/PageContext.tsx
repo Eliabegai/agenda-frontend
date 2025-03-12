@@ -6,6 +6,7 @@ interface UserDataProps {
   nome: string
   role: string
   email: string
+  id: string
 }
 
 interface CurrentDateContextProps {
@@ -27,7 +28,9 @@ interface CurrentAdminOrUserProps {
   role: string
   nome: string
   email: string
+  id: string
   setNome: (nome: string) => void
+  setId: (id: string) => void
   setEmail: (email: string) => void
   setRole: (role: string) => void
   getToken: () => string | null
@@ -47,6 +50,7 @@ export const ContextProvider = ({ children }: { children: ReactNode }) => {
   const [role, setRoleState] = useState('')
   const [email, setEmailState] = useState('')
   const [nome, setNomeState] = useState('')
+  const [id, setIdState] = useState('')
 
   useEffect(() => {
     const storadCliente = localStorage.getItem('cliente')
@@ -83,6 +87,10 @@ export const ContextProvider = ({ children }: { children: ReactNode }) => {
     setNomeState(nome)
   }
 
+  const setId = (id: string) => {
+    setIdState(id)
+  }
+
   const getUserData = () => {
     const storadUser = localStorage.getItem('user')
     if(storadUser) {
@@ -116,7 +124,7 @@ export const ContextProvider = ({ children }: { children: ReactNode }) => {
   return (
     <CurrentDateContext.Provider value={{ currentDate, setCurrentDate, changeWeek }}>
       <CurrentClienteContext.Provider value={{ cliente, role, setCliente, setRole, getToken, saveToken }}>
-        <CurrentAdminOrUserContext.Provider value={{role, email, nome, setEmail, setNome, setRole, getToken, saveToken, getUserData, Logout}}>
+        <CurrentAdminOrUserContext.Provider value={{role, email, nome, id, setEmail, setNome, setRole, setId, getToken, saveToken, getUserData, Logout}}>
           {children}
         </CurrentAdminOrUserContext.Provider>
       </CurrentClienteContext.Provider>

@@ -2,16 +2,15 @@
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Eye, Pencil } from "lucide-react";
-import { format, addDays, startOfWeek } from "date-fns";
+import { ChevronLeft, ChevronRight, Eye } from "lucide-react";
+import { format, addDays, startOfWeek, addHours} from "date-fns";
 import { ptBR } from "date-fns/locale/pt-BR";
-import { useCurrentDate } from '../hooks/PageContext';
+import { useCurrentAdminOrUser, useCurrentDate } from '../hooks/PageContext';
 import { toast } from 'sonner';
-import { api } from '../../../api.js'
 import { Modal } from '../Dialog/Modal';
 import VisualizarAgenda from './VisualizaraAgenda';
+import { gerarHorarios, returnNextSevenDays } from '@/utils/gerarHorarios';
 
-const daysOfWeek = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"];
 
 interface DateInfo {
   dayOfWeek: string;
@@ -21,18 +20,9 @@ interface DateInfo {
   fullDate: string
 }
 
-export interface IAgendamento {
-  id: string;
-  protocoloId: string;
-  dataHora: string;
-  criadoEm: string;
-  atualizadoEm: string;
-  status: string;
-  userId: string;
-}
-
 export default function AgendaGeral() {
   const { currentDate, changeWeek} = useCurrentDate()
+  const { email, getToken } = useCurrentAdminOrUser()
   const [dates, setDates] = useState<DateInfo[]>([])
   const [mesAtual, setMesAtual] = useState('')
   const [horarios, setHorarios] = useState<string[]>([])
@@ -41,33 +31,29 @@ export default function AgendaGeral() {
   const [openForm, setOpenForm] = useState(false)
   const [agendamentosFiltrados, setAgendamentosFiltrados] = useState<IAgendamento[]>([]);
 
-
-  const gerarHorarios = (horaInicio:string, horaFim:string, intervalo:number) => {
-    const horarios = [];
-    
-    // Converte as horas para minutos desde a meia-noite
-    const [horaInicioH, minutoInicio] = horaInicio.split(":").map(Number);
-    const [horaFimH, minutoFim] = horaFim.split(":").map(Number);
-  
-    let tempoInicio = horaInicioH * 60 + minutoInicio;
-    const tempoFim = horaFimH * 60 + minutoFim;
-  
-    while (tempoInicio <= tempoFim) {
-      // Converte minutos para o formato HH:mm
-      const horaFormatada = String(Math.floor(tempoInicio / 60)).padStart(2, "0");
-      const minutoFormatado = String(tempoInicio % 60).padStart(2, "0");
-      horarios.push(`${horaFormatada}:${minutoFormatado}`);
-  
-      tempoInicio += intervalo;
-    }
-
-    setHorarios(horarios)
-  };
+  const url = process.env.NEXT_PUBLIC_API_URL
+  const token = getToken()
 
   const getAgendamentos = async () => {
+    if (!token) {
+      toast.error('Token não encontrado');
+      return;
+    }
+
+    const startDate = `${dates?.[0].fullDate}T10:00:00Z`
+    const endDate = `${dates?.[6].fullDate}T10:00:00Z`
+
     try{
-      const response = await api.get('/agendamentos')
-      setAgendamentos(response.data)
+      const response = await fetch(`${url}/agendamento/filter?start=${startDate}&end=${endDate}`, {
+        method: 'GET',
+        headers: {
+          "Content-Type": "application/json",
+          'token': token,
+          'admin': email
+        },
+      })
+      const data = await response.json()
+      setAgendamentos(data.data)
       toast.success('Agenda atualizada')
     } catch (error) {
       console.error('Erro ao buscar os dados', error)
@@ -76,14 +62,30 @@ export default function AgendaGeral() {
   }
 
   const getAgendamentosPorDataHora = async (dataHora: string) => {
-    try {
-      const response = await api.get(`/agendamentos?dataHora=${dataHora}:00`);
-      setAgendamentosFiltrados(response.data);
-      setOpenForm(true);
-    } catch (error) {
-      console.error('Erro ao buscar os dados', error);
-      toast.error('Erro ao buscar os dados');
+
+    if (!token) {
+      toast.error('Token não encontrado');
+      return;
     }
+
+    const startDate = addHours(format(new Date(dataHora), "yyyy-MM-dd'T'HH:mm:ss'Z'", { locale: ptBR }), 3)
+    const endDate = startDate
+    try{
+      const response = await fetch(`${url}/agendamento/filter?start=${startDate}&end=${endDate}`, {
+        method: 'GET',
+        headers: {
+          "Content-Type": "application/json",
+          'token': token,
+          'admin': email
+        },
+      })
+      const data = await response.json()
+      setAgendamentosFiltrados(data.data)
+    } catch (error) {
+      console.error('Erro ao buscar os dados', error)
+      toast.error('Erro ao buscar os dados')
+    }
+
   };
 
   const agruparAgendamentosPorHorario = (agendamentos: IAgendamento[]) => {
@@ -107,21 +109,16 @@ export default function AgendaGeral() {
   useEffect(()=>{
     const startDate = startOfWeek(currentDate, { weekStartsOn: 0 })
     
-    const nextSevenDays = Array.from({length: 7}, (_, i) => {
-      const newDate = addDays(startDate, i)
-      return{
-        dayOfWeek: daysOfWeek[newDate.getDay()],
-        dayOfMonth: format(newDate, "d"),
-        month: format(newDate, "MMMM", { locale: ptBR }),
-        dayOfMonthNumber: newDate.getDay(),
-        fullDate: format(newDate, 'yyyy-MM-dd')
-      }
-    })
+    const nextSevenDays = returnNextSevenDays(startDate)
+    setDates(nextSevenDays) 
     
     setMesAtual(format(currentDate, "MMMM", { locale: ptBR }))
-    setDates(nextSevenDays) 
-    gerarHorarios("07:00", "20:00", 30)
+    
+    const horarios = gerarHorarios("07:00", "20:00", 30)
+    setHorarios(horarios)
+    
     getAgendamentos()
+
   },[currentDate])
 
   useEffect(() => {
@@ -164,49 +161,11 @@ export default function AgendaGeral() {
               ))}
             </tr>
           </thead>
-          {/* <tbody>
-            { horarios.map((hora, i) => (
-              <tr key={i}>
-                {dates.map((dia, j) => (
-                  <td key={j} className={`
-                    text-center border p-2 rounded-lg font-normal hover:bg-primary-foreground
-                    ${dia.dayOfWeek === "Dom" ? "opacity-30" : "opacity-100"}
-                    ${agendamentosMockGeral?.[i]?.[j] > 4 ? "bg-red-300 hover:bg-red-500 dark:bg-red-700 dark:hover:bg-red-600" : ""}
-                  `}>
-                    <div  className='flex flex-row w-full justify-between items-center space-x-2'>
-                      <div className='flex flex-col text-xs'>
-                        <span>{hora}</span>
-                        <span>Agendados</span>
-                      </div>
-                      {
-                        (dia.dayOfWeek === "domingo") ? (
-                          <span className='text-xl font-normal'>-------</span>
-                        ) : (
-                          <>
-                            <span className='font-normal'>{dia.dayOfWeek === "Dom" ? "---" : agendamentosMockGeral?.[i]?.[dia.dayOfMonthNumber]}</span>
-                            <Button 
-                              disabled={dia.dayOfWeek === "Dom" || agendamentosMockGeral?.[i]?.[j] > 4} 
-                              size={'icon'} 
-                              onClick={() => toast.info(`Agendado: ${hora}`)}
-                              className='bg-zinc-700 hover:bg-zinc-600 dark:bg-zinc-300 dark:hover:bg-zinc-200'
-                            >
-                              <Pencil size={12} />
-                            </Button>
-                          </>
-                        )
-                      }
-                    </div>
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody> */}
           <tbody>
               { horarios.map((hora, i) => (
                 <tr key={i}>
                   {
                     dates.map((dia, j) => {
-                      // const chave = `${format(currentDate, 'yyyy-MM-dd')} ${hora}`
                       const chave = `${dia.fullDate} ${hora}`
                       const quantidadeAgendamentos = agendamentosPorHorario[chave] || 0
 

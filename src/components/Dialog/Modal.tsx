@@ -6,13 +6,13 @@ interface ModalProps {
     labelOpen?: React.ReactNode
     title?: string
     description?: string
-    close?: boolean
+    closeFooter?: boolean
     open?: boolean
     openChange: () => void
 }
 
 
-export function Modal({children, labelOpen, title, description, close, open, openChange}: ModalProps) {
+export function Modal({children, labelOpen, title, description, closeFooter, open, openChange}: ModalProps) {
   return (
     <Dialog open={open} onOpenChange={openChange}>
       <DialogTrigger asChild>
@@ -25,8 +25,8 @@ export function Modal({children, labelOpen, title, description, close, open, ope
             {description}
           </DialogDescription>
         </DialogHeader>
-            {children}
-        <DialogFooter hidden={close} className="sm:justify-start">
+          {children}
+        <DialogFooter hidden={closeFooter} className="sm:justify-start">
           <DialogClose asChild>
             <Button type="button" variant="secondary">
               Close

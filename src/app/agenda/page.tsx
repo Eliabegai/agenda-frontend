@@ -10,7 +10,7 @@ export default function Agenda() {
   return (
     <Pagina>
       <div className='flex flex-1 w-full h-full justify-center items-center p-2 relative '>
-        { role === 'admin' ? <AgendaGeral /> : role === 'user' ? <AgendaFuncionario /> :<AgendaCliente /> }
+        { role === 'ADMIN' ? <AgendaGeral /> : role === 'USER' ? <AgendaFuncionario /> :<AgendaCliente /> }
       </div>
     </Pagina>
   );

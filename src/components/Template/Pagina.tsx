@@ -16,7 +16,7 @@ const Pagina = (props: PaginaProps) => {
     <div className="flex flex-col m-auto px-4 py-2 w-full h-screen absolute">
       <Header />
       <div className="flex flex-row h-screen w-full mt-4 overflow-auto">
-        {role === "admin" ? <Sidebar /> : <SidebarCliente />}
+        {role === "ADMIN" ? <Sidebar /> : <SidebarCliente />}
         <main className="flex flex-col flex-1 justify-center items-center ml-72">{props.children}</main>
       </div>
     </div>

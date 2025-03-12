@@ -8,6 +8,7 @@ import { ModeToggle } from '../ModeToggle/modeToggler';
 import { useRouter } from 'next/navigation';
 import { useCurrentAdminOrUser } from '../hooks/PageContext';
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 
 const Header = () => {
   const { getToken, Logout } = useCurrentAdminOrUser()
@@ -29,9 +30,11 @@ const Header = () => {
 
   return(
     <header className="flex border-b-2 px-4 pt-4 pb-1 justify-between items-center">
-      <div className='text-2xl flex items-center space-x-2'>
-        <FontAwesomeIcon icon={faCalendarDays} color='(--background-azul)' />
-        <h1 className='text-3xl font-bold'>Agenda de Trabalho</h1>
+      <div className='text-2xl'>
+        <Link href={'/agenda'} className='flex justify-center items-center space-x-2'>
+          <FontAwesomeIcon icon={faCalendarDays} color='(--background-azul)' />
+          <h1 className='text-3xl font-bold'>Agenda de Trabalho</h1>
+        </Link>
       </div>
       <div className='space-x-2'>
         <DropdownMenu>
