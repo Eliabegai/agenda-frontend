@@ -1,14 +1,12 @@
 'use client'
-import { toast } from 'sonner'
 import { Button } from '../ui/button'
 import { Checkbox } from '../ui/checkbox'
 import { Input } from '../ui/input'
 import { Label } from '../ui/label'
-import { useCurrentAdminOrUser } from '../hooks/PageContext'
-import { Controller, useForm } from 'react-hook-form'
+import { useForm } from 'react-hook-form'
 import { Form, FormControl, FormField, FormItem, FormMessage } from '../ui/form'
 import { z } from 'zod'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { IMaskInput } from 'react-imask'
 
@@ -16,10 +14,11 @@ import { IMaskInput } from 'react-imask'
 const schema = z.object({
   nome: z.string().nonempty('Nome é obrigatório'),
   email: z.string().email('Email inválido').nonempty('Email é obrigatório'),
-  senha: z.string().min(5,{message: "Mínimo 5 caracteres"}),
+  // senha: z.string().min(5,{message: "Mínimo 5 caracteres"}),
   horarios: z.array(
     z.object({
       diaSemana: z.number(),
+      id: z.string().optional(),
       startTime: z.string().optional(),
       endTime: z.string().optional(),
       breakStart: z.string().optional(),
@@ -38,29 +37,26 @@ interface FormUserProps {
 const FormEditUser = ({ onSubmit, cancel, userData }:FormUserProps) => {
 
   if(userData === null) return
-  console.log(userData)
 
-  const { email, getToken } = useCurrentAdminOrUser()
   const [repeatHorarios, setRepeatHorarios] = useState<boolean>(false)
   const form = useForm({
     resolver: zodResolver(schema),
     defaultValues: {
       nome: '',
       email: '',
-      senha: '',
+      // senha: '',
       horarios: [
-        { diaSemana: 1, startTime: '', breakStart: '', breakEnd: '', endTime: '', active: false },
-        { diaSemana: 2, startTime: '', breakStart: '', breakEnd: '', endTime: '', active: false },
-        { diaSemana: 3, startTime: '', breakStart: '', breakEnd: '', endTime: '', active: false },
-        { diaSemana: 4, startTime: '', breakStart: '', breakEnd: '', endTime: '', active: false },
-        { diaSemana: 5, startTime: '', breakStart: '', breakEnd: '', endTime: '', active: false },
-        { diaSemana: 6, startTime: '', breakStart: '', breakEnd: '', endTime: '', active: false }
+        { diaSemana: 1, id: '', startTime: '', breakStart: '', breakEnd: '', endTime: '', active: false },
+        { diaSemana: 2, id: '', startTime: '', breakStart: '', breakEnd: '', endTime: '', active: false },
+        { diaSemana: 3, id: '', startTime: '', breakStart: '', breakEnd: '', endTime: '', active: false },
+        { diaSemana: 4, id: '', startTime: '', breakStart: '', breakEnd: '', endTime: '', active: false },
+        { diaSemana: 5, id: '', startTime: '', breakStart: '', breakEnd: '', endTime: '', active: false },
+        { diaSemana: 6, id: '', startTime: '', breakStart: '', breakEnd: '', endTime: '', active: false }
       ]
     }
   })
 
   const handleRepeatHorarios = () => {
-    toast.info('repeat horario')
     setRepeatHorarios(!repeatHorarios)
     if (!repeatHorarios) {
       const firstHorario = form.watch('horarios')[0]
@@ -84,22 +80,49 @@ const FormEditUser = ({ onSubmit, cancel, userData }:FormUserProps) => {
   }
 
   const handleSubmit = (data:z.infer<typeof schema>) => {
-    toast.success('Cadastrado novo usuário')
-    console.log(data)
     const body = {
       "nome": data.nome,
       "email": data.email,
-      "senha": data.senha,
-      "role": "USER"
-      // "horarios": data.horarios
+      // "senha": data.senha,
+      "role": "USER",
+      "horarios": data.horarios
     }
     onSubmit(userData.id, body)
   }
 
+  const preencherDados = (user: IFuncionario) => {
+    form.setValue('nome', user.nome)
+    form.setValue('email', user.email)
+
+    const horarios = user.horarios
+
+    for(let i = 0; i < 6; i++) {
+
+      if(horarios[i]?.startTime !== undefined) {
+        form.setValue(`horarios.${i}.active`, true)
+        form.setValue(`horarios.${i}.id`, horarios[i]?.id)
+        form.setValue(`horarios.${i}.startTime`, horarios[i]?.startTime)
+        form.setValue(`horarios.${i}.breakStart`, horarios[i]?.breakStart)
+        form.setValue(`horarios.${i}.breakEnd`, horarios[i]?.breakEnd)
+        form.setValue(`horarios.${i}.endTime`, horarios[i]?.endTime)
+      } else {
+          form.setValue(`horarios.${i}.active`, false)
+          form.setValue(`horarios.${i}.startTime`, '')
+          form.setValue(`horarios.${i}.breakStart`, '')
+          form.setValue(`horarios.${i}.breakEnd`, '')
+          form.setValue(`horarios.${i}.endTime`, '')
+        }
+    }
+  }
+
+  useEffect(() => {
+    preencherDados(userData)
+  },[userData])
+
   return(
     <div className='flex flex-col w-full h-full justify-center items-center p-2'>
       <div className='flex flex-col w-full justify-center items-center'>
-          <h2 className='text-3xl font-bold mb-4'>Novo Funcionário</h2>
+          <h2 className='text-3xl font-bold mb-4'>Editar Funcionário</h2>
           <div className='flex w-full h-2 bg-[var(--background-azul)] rounded-lg'></div>
       </div>
       <Form {...form} >
@@ -137,7 +160,7 @@ const FormEditUser = ({ onSubmit, cancel, userData }:FormUserProps) => {
                       </FormItem>
                   )}
                   />
-                  <FormField 
+                  {/* <FormField 
                     name='senha'
                     control={form.control}
                     render={({ field }) => (
@@ -151,7 +174,7 @@ const FormEditUser = ({ onSubmit, cancel, userData }:FormUserProps) => {
                         <FormMessage />
                       </FormItem>
                   )}
-                  />
+                  /> */}
               </div>
 
             <div className='flex flex-col mt-2'>
@@ -268,7 +291,7 @@ const FormEditUser = ({ onSubmit, cancel, userData }:FormUserProps) => {
               </div>
 
               <div className='flex w-full mt-4 justify-evenly items-center'>
-                <Button variant={'outline'} type='submit'>Cadastrar</Button>
+                <Button variant={'outline'} className='bg-[var(--background-azul)] hover:bg-[var(--background-hover-azul)]' type='submit'>Salvar</Button>
                 <Button variant={'outline'} type='button' onClick={cancel}>Cancelar</Button>
               </div>
             </div>

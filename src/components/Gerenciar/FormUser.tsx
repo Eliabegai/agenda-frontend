@@ -1,11 +1,10 @@
 'use client'
-import { toast } from 'sonner'
+
 import { Button } from '../ui/button'
 import { Checkbox } from '../ui/checkbox'
 import { Input } from '../ui/input'
 import { Label } from '../ui/label'
-import { useCurrentAdminOrUser } from '../hooks/PageContext'
-import { Controller, useForm } from 'react-hook-form'
+import { useForm } from 'react-hook-form'
 import { Form, FormControl, FormField, FormItem, FormMessage } from '../ui/form'
 import { z } from 'zod'
 import { useState } from 'react'
@@ -36,7 +35,6 @@ interface FormUserProps {
 
 const FormUser = ({ onSubmit, cancel }:FormUserProps) => {
 
-  const { email, getToken } = useCurrentAdminOrUser()
   const [repeatHorarios, setRepeatHorarios] = useState<boolean>(false)
   const form = useForm({
     resolver: zodResolver(schema),
@@ -56,7 +54,6 @@ const FormUser = ({ onSubmit, cancel }:FormUserProps) => {
   })
 
   const handleRepeatHorarios = () => {
-    toast.info('repeat horario')
     setRepeatHorarios(!repeatHorarios)
     if (!repeatHorarios) {
       const firstHorario = form.watch('horarios')[0]
@@ -80,19 +77,16 @@ const FormUser = ({ onSubmit, cancel }:FormUserProps) => {
   }
 
   const handleSubmit = (data:z.infer<typeof schema>) => {
-    toast.success('Cadastrado novo usuário')
-    console.log(data)
     const body = {
       "nome": data.nome,
       "email": data.email,
       "senha": data.senha,
-      "role": "USER"
-      // "horarios": data.horarios
+      "role": "USER",
+      "horarios": data.horarios
     }
     onSubmit(body)
   }
 
-  console.log(form.watch('horarios')[0]) 
   return(
     <div className='flex flex-col w-full h-full justify-center items-center p-2'>
       <div className='flex flex-col w-full justify-center items-center'>

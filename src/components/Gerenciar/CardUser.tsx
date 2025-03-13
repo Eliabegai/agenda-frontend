@@ -1,13 +1,15 @@
 import { Ban, BanIcon, BlocksIcon, Pencil, Trash, User } from 'lucide-react'
 import { Button } from '../ui/button'
 import { toast } from 'sonner'
+import Tooltip from '../Toolttip/Tooltip'
 
 interface CardUserProps {
   funcionario: any
   handleEditUser: (id:string) => void
+  handleRemoveUser: (id:string) => void
 }
 
-const CardUser = ({ funcionario, handleEditUser }: CardUserProps) => {
+const CardUser = ({ funcionario, handleEditUser, handleRemoveUser }: CardUserProps) => {
   return(
     <div key={funcionario.id} className='flex flex-row w-80 h-32 justify-center items-center space-x-2  p-2'>
       
@@ -21,9 +23,15 @@ const CardUser = ({ funcionario, handleEditUser }: CardUserProps) => {
           <span>{funcionario.email}</span>
         </div>
         <div className='flex justify-end items-end space-x-2'>
-          <Button variant={'default'} size={'icon'} onClick={() => toast.info(`Click Indisponível user ${funcionario.nome}`)}><Ban /></Button>
-          <Button variant={'default'} size={'icon'} onClick={() => handleEditUser(funcionario.id)}><Pencil /></Button>
-          <Button variant={'default'} size={'icon'} onClick={() => toast.info(`Click Delete user ${funcionario.nome}`)}><Trash /></Button>
+          <Tooltip text='Indisponibilidade'>
+            <Button variant={'default'} size={'icon'} onClick={() => toast.info(`Click Indisponível user ${funcionario.nome}`)}><Ban /></Button>
+          </Tooltip>
+          <Tooltip text='Editar'>
+            <Button variant={'default'} size={'icon'} onClick={() => handleEditUser(funcionario.id)}><Pencil /></Button>
+          </Tooltip>
+          <Tooltip text='Deletar'>
+            <Button variant={'default'} size={'icon'} onClick={() => handleRemoveUser(funcionario.id)}><Trash /></Button>
+          </Tooltip>
             
         </div>
       </div>

@@ -4,7 +4,7 @@ import { ChangeEvent, KeyboardEvent, useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { useCurrentAdminOrUser } from '../hooks/PageContext'
 import { useRouter } from 'next/navigation'
-import { Plus } from 'lucide-react'
+import { AlertCircle, Plus, TriangleAlert } from 'lucide-react'
 import CardUser from './CardUser'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
@@ -120,6 +120,7 @@ const Usuarios = () => {
   }
 
   const submitEditUser = async (id: string, body: any) => {
+    setIsLoading(!isLoading)
     if (!token) {
       toast.error('Token não encontrado');
       return;
@@ -136,6 +137,8 @@ const Usuarios = () => {
         body: JSON.stringify(body)
       })
       toast.success('Usuário Atualizado com Sucesso!')
+      setOpenEdit(false)
+      setIsLoading(false)
       getFuncionarios()
     } catch (error) {
       console.error('Erro ao atualizar Usuário!', error)
@@ -159,6 +162,7 @@ const Usuarios = () => {
         }
       })
       toast.success('Usuário Removido com Sucesso!')
+      setOpenRemove(false)
       getFuncionarios()
     } catch (error) {
       console.error('Erro ao remover Usuário!', error)
@@ -184,7 +188,7 @@ const Usuarios = () => {
         },
       })
       const data = await response.json()
-      console.log(data)
+      setOpenEdit(!openEdit)
       setFuncionario(data.data)
     } catch (error) {
       console.error('Erro ao buscar os dados', error)
@@ -192,7 +196,30 @@ const Usuarios = () => {
     }
   }
 
-  const handleRemoveUser = async (id: string) => {}
+  const handleRemoveUser = async (id: string) => {
+    setOpenRemove(!openRemove)
+
+    if (!token) {
+      toast.error('Token não encontrado');
+      return;
+    }
+
+    try{
+      const response = await fetch(`${url}/user/${id}`, {
+        method: 'GET',
+        headers: {
+          "Content-Type": "application/json",
+          'token': token,
+          'admin': email
+        },
+      })
+      const data = await response.json()
+      setFuncionario(data.data)
+    } catch (error) {
+      console.error('Erro ao buscar os dados', error)
+      toast.error('Erro ao buscar os dados')
+    }
+  }
 
   const onSubmitUser = async (body: any) => {
     setIsLoading(true)
@@ -246,6 +273,30 @@ const Usuarios = () => {
         <FormEditUser onSubmit={submitEditUser} cancel={() => setOpenEdit(!openEdit)} userData={funcionario} />
       </Modal>
 
+      <Modal open={openRemove} openChange={() => setOpenRemove(!openRemove)} closeFooter>
+        {
+          funcionario && (
+            <div>
+              <div className='mt-2 flex flex-col justify-center items-center gap-6'>
+                <div className='text-2xl flex flex-col justify-center items-center gap-6'>
+                  <span><TriangleAlert size={'72px'} /></span>
+                  <span className=''>Tem certeza que deseja deletar o funcionário?</span>
+                </div>
+                <div className='flex space-x-2 items-end'>
+                  <span>Nome:</span>
+                  <span className='text-xl font-semibold underline italic'>{funcionario?.nome}</span>
+                </div>
+
+                <div className='mb-2 flex justify-evenly w-full'>
+                  <Button variant={'destructive'} onClick={() => submitRemoveUser(funcionario?.id)} >Remover</Button>
+                  <Button variant={'outline'} onClick={() => setOpenRemove(!openRemove)} >Cancelar</Button>
+                </div>
+              </div>
+            </div>
+          )
+        }
+      </Modal>
+
       <div className='flex flex-col w-full h-full'>
         
         <div className='flex w-full h-20 justify-between items-center px-2'>
@@ -262,11 +313,11 @@ const Usuarios = () => {
         </div>
 
         {/* Card Funcionario/User */}
-        <div className='grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 justify-center items-center place-items-center gap-4'>
+        <div className='grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 justify-center items-center place-items-center gap-2'>
           {
             funcionarios &&
             funcionarios.map((funcionario) => (
-              <CardUser key={funcionario.id} funcionario={funcionario} handleEditUser={handleEditUser} />
+              <CardUser key={funcionario.id} funcionario={funcionario} handleEditUser={handleEditUser} handleRemoveUser={handleRemoveUser} />
             ))
           }
         </div>
