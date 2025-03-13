@@ -27,6 +27,7 @@ const Usuarios = () => {
   const [openRemove, setOpenRemove] = useState<boolean>(false)
   const [openIndisponivel, setOpenIndisponivel] = useState<boolean>(false)
   const [isLoading, setIsLoading] = useState<boolean>(false)
+  const [idUsuario, setIdUsuario] = useState('')
 
 
   // useEffect(() => {
@@ -173,6 +174,7 @@ const Usuarios = () => {
   }
 
   const handleIndisponivel = async (id: string) => {
+    setIdUsuario(id)
     setOpenIndisponivel(!openIndisponivel)
   }
 
@@ -278,7 +280,7 @@ const Usuarios = () => {
       </Modal>
       
       <Modal open={openIndisponivel} openChange={() => setOpenIndisponivel(!openIndisponivel)} closeFooter>
-        <FormIndisponivelUser onSubmit={submitIndisponivel} cancel={() => setOpenIndisponivel(!openIndisponivel)} userData={funcionario} />
+        <FormIndisponivelUser onSubmit={submitIndisponivel} id={idUsuario} cancel={() => setOpenIndisponivel(!openIndisponivel)} userData={funcionario} />
       </Modal>
 
       <Modal open={openRemove} openChange={() => setOpenRemove(!openRemove)} closeFooter>
