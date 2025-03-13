@@ -7,9 +7,10 @@ interface CardUserProps {
   funcionario: any
   handleEditUser: (id:string) => void
   handleRemoveUser: (id:string) => void
+  handleIndisponivelUser: (id:string) => void
 }
 
-const CardUser = ({ funcionario, handleEditUser, handleRemoveUser }: CardUserProps) => {
+const CardUser = ({ funcionario, handleEditUser, handleRemoveUser, handleIndisponivelUser }: CardUserProps) => {
   return(
     <div key={funcionario.id} className='flex flex-row w-80 h-32 justify-center items-center space-x-2  p-2'>
       
@@ -24,7 +25,7 @@ const CardUser = ({ funcionario, handleEditUser, handleRemoveUser }: CardUserPro
         </div>
         <div className='flex justify-end items-end space-x-2'>
           <Tooltip text='Indisponibilidade'>
-            <Button variant={'default'} size={'icon'} onClick={() => toast.info(`Click Indisponível user ${funcionario.nome}`)}><Ban /></Button>
+            <Button variant={'default'} size={'icon'} onClick={() => handleIndisponivelUser(funcionario.id)}><Ban /></Button>
           </Tooltip>
           <Tooltip text='Editar'>
             <Button variant={'default'} size={'icon'} onClick={() => handleEditUser(funcionario.id)}><Pencil /></Button>

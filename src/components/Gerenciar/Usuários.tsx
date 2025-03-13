@@ -11,6 +11,7 @@ import { Input } from '../ui/input'
 import { Modal } from '../Dialog/Modal'
 import FormUser from './FormUser'
 import FormEditUser from './FormEditUser'
+import FormIndisponivelUser from './FormIndisponivelUser'
 
 
 const Usuarios = () => {
@@ -24,6 +25,7 @@ const Usuarios = () => {
   const [openCreate, setOpenCreate] = useState<boolean>(false)
   const [openEdit, setOpenEdit] = useState<boolean>(false)
   const [openRemove, setOpenRemove] = useState<boolean>(false)
+  const [openIndisponivel, setOpenIndisponivel] = useState<boolean>(false)
   const [isLoading, setIsLoading] = useState<boolean>(false)
 
 
@@ -101,22 +103,22 @@ const Usuarios = () => {
       return;
     }
     
-    try{
-      await fetch(`${url}/user/${id}`, {
-        method: 'POST',
-        headers: {
-          "Content-Type": "application/json",
-          'token': token,
-          'admin': email
-        },
-        body: JSON.stringify(body)
-      })
-      toast.success('Indisponibilidade Cadastrada!')
-      getFuncionarios()
-    } catch (error) {
-      console.error('Erro ao cadastrar.', error)
-      toast.error('Erro ao cadastrar.')
-    }
+    // try{
+    //   await fetch(`${url}/user/${id}`, {
+    //     method: 'POST',
+    //     headers: {
+    //       "Content-Type": "application/json",
+    //       'token': token,
+    //       'admin': email
+    //     },
+    //     body: JSON.stringify(body)
+    //   })
+    //   toast.success('Indisponibilidade Cadastrada!')
+    //   getFuncionarios()
+    // } catch (error) {
+    //   console.error('Erro ao cadastrar.', error)
+    //   toast.error('Erro ao cadastrar.')
+    // }
   }
 
   const submitEditUser = async (id: string, body: any) => {
@@ -170,7 +172,9 @@ const Usuarios = () => {
     }
   }
 
-  const handleIndisponivel = async (id: string) => {}
+  const handleIndisponivel = async (id: string) => {
+    setOpenIndisponivel(!openIndisponivel)
+  }
 
   const handleEditUser = async (id: string) => {
     if (!token) {
@@ -272,6 +276,10 @@ const Usuarios = () => {
       <Modal open={openEdit} openChange={() => setOpenEdit(!openEdit)} closeFooter>
         <FormEditUser onSubmit={submitEditUser} cancel={() => setOpenEdit(!openEdit)} userData={funcionario} />
       </Modal>
+      
+      <Modal open={openIndisponivel} openChange={() => setOpenIndisponivel(!openIndisponivel)} closeFooter>
+        <FormIndisponivelUser onSubmit={submitIndisponivel} cancel={() => setOpenIndisponivel(!openIndisponivel)} userData={funcionario} />
+      </Modal>
 
       <Modal open={openRemove} openChange={() => setOpenRemove(!openRemove)} closeFooter>
         {
@@ -317,7 +325,13 @@ const Usuarios = () => {
           {
             funcionarios &&
             funcionarios.map((funcionario) => (
-              <CardUser key={funcionario.id} funcionario={funcionario} handleEditUser={handleEditUser} handleRemoveUser={handleRemoveUser} />
+              <CardUser 
+                key={funcionario.id} 
+                funcionario={funcionario} 
+                handleEditUser={handleEditUser} 
+                handleRemoveUser={handleRemoveUser}
+                handleIndisponivelUser={handleIndisponivel}
+              />
             ))
           }
         </div>
