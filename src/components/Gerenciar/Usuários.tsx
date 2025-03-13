@@ -103,23 +103,27 @@ const Usuarios = () => {
       toast.error('Token não encontrado');
       return;
     }
+    setIsLoading(!isLoading)
+    console.log(id, body)
     
-    // try{
-    //   await fetch(`${url}/user/${id}`, {
-    //     method: 'POST',
-    //     headers: {
-    //       "Content-Type": "application/json",
-    //       'token': token,
-    //       'admin': email
-    //     },
-    //     body: JSON.stringify(body)
-    //   })
-    //   toast.success('Indisponibilidade Cadastrada!')
-    //   getFuncionarios()
-    // } catch (error) {
-    //   console.error('Erro ao cadastrar.', error)
-    //   toast.error('Erro ao cadastrar.')
-    // }
+    try{
+      await fetch(`${url}/user/${id}/indisponibilidade`, {
+        method: 'POST',
+        headers: {
+          "Content-Type": "application/json",
+          'token': token,
+          'admin': email
+        },
+        body: JSON.stringify(body)
+      })
+      toast.success('Indisponibilidade Cadastrada!')
+      setIsLoading(false)
+      setOpenIndisponivel(false)
+      getFuncionarios()
+    } catch (error) {
+      console.error('Erro ao cadastrar.', error)
+      toast.error('Erro ao cadastrar.')
+    }
   }
 
   const submitEditUser = async (id: string, body: any) => {
@@ -280,7 +284,11 @@ const Usuarios = () => {
       </Modal>
       
       <Modal open={openIndisponivel} openChange={() => setOpenIndisponivel(!openIndisponivel)} closeFooter>
-        <FormIndisponivelUser onSubmit={submitIndisponivel} id={idUsuario} cancel={() => setOpenIndisponivel(!openIndisponivel)} userData={funcionario} />
+        <FormIndisponivelUser 
+          onSubmit={submitIndisponivel} 
+          id={idUsuario} 
+          cancel={() => setOpenIndisponivel(!openIndisponivel)}
+        />
       </Modal>
 
       <Modal open={openRemove} openChange={() => setOpenRemove(!openRemove)} closeFooter>
