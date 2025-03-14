@@ -121,13 +121,6 @@ export default function AgendaFuncionario() {
     getAgendamentosPorDataHora(id)
     setOpen(!open)
   }
-
-  // console.log('agendamentos', agendamentos)
-  // console.log('dates', dates)
-  // console.log('horarios', horarios)
-  // console.log('horaAgendamento', horaAgendamento)
-  // console.log('agendamentosPorHorario', agendamentosPorHorario)
-  // console.log('agendamentosFiltrados', agendamentosFiltrados)
   
   return (
     <div className="flex flex-col w-full p-4 rounded-xl shadow-md left-0 top-0 absolute">
