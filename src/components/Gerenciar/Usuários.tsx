@@ -2,9 +2,9 @@
 
 import { ChangeEvent, KeyboardEvent, useEffect, useState } from 'react'
 import { toast } from 'sonner'
-import { useCurrentAdminOrUser } from '../hooks/PageContext'
+import { useCurrentAdminOrUser, useFuncionarioContext } from '../hooks/PageContext'
 import { useRouter } from 'next/navigation'
-import { AlertCircle, Plus, TriangleAlert } from 'lucide-react'
+import { Plus, Search, TriangleAlert } from 'lucide-react'
 import CardUser from './CardUser'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
@@ -16,9 +16,8 @@ import FormIndisponivelUser from './FormIndisponivelUser'
 
 const Usuarios = () => {
   const router = useRouter()
-  const { role, email, getToken } = useCurrentAdminOrUser()
-  const [funcionarios, setFuncionarios] = useState<IFuncionario[]>([])
-  const [funcionario, setFuncionario] = useState<IFuncionario | null>(null)
+  const { role, email, getToken, updateFuncionarios } = useCurrentAdminOrUser()
+  const {funcionariosFilter, funcionario, funcionarios, setFuncionario, setFuncionariosFilter} = useFuncionarioContext()
   const url = process.env.NEXT_PUBLIC_API_URL
   const token = typeof window !== 'undefined' ? getToken() : null
   const [userFilter, setUserFilter] = useState('')
@@ -30,34 +29,10 @@ const Usuarios = () => {
   const [idUsuario, setIdUsuario] = useState('')
 
 
-  // useEffect(() => {
-  //   if(role !== 'ADMIN')
-  //     router.push('/agenda')
-  // },[])
-
-  const getFuncionarios = async () => {
-    if (!token) {
-      toast.error('Token não encontrado');
-      return;
-    }
-    
-    try{
-      const response = await fetch(`${url}/user`, {
-        method: 'GET',
-        headers: {
-          "Content-Type": "application/json",
-          'token': token,
-          'admin': email
-        },
-      })
-      const data = await response.json()
-      setFuncionarios(data.data)
-    } catch (error) {
-      console.error('Erro ao buscar os dados', error)
-      toast.error('Erro ao buscar os dados')
-    }
-
-  }
+  useEffect(() => {
+    if(role !== 'ADMIN')
+      router.push('/agenda')
+  },[])
 
   const getUserByName = async (nome: string) => {
     if (!token) {
@@ -75,7 +50,7 @@ const Usuarios = () => {
         },
       })
       const data = await response.json()
-      setFuncionarios(data.getUser)
+      setFuncionariosFilter(data.data)
     } catch (error) {
       console.error('Erro ao buscar os dados', error)
       toast.error('Erro ao buscar os dados')
@@ -89,11 +64,12 @@ const Usuarios = () => {
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      if(!userFilter) {
-        getFuncionarios()
-      } else {
+      if(userFilter) {
         getUserByName(userFilter)
         toast.success(`Procurando usuário por nome: ${userFilter}`);
+      } else {
+        updateFuncionarios()
+        setFuncionariosFilter([])
       }
     }
   };
@@ -104,7 +80,6 @@ const Usuarios = () => {
       return;
     }
     setIsLoading(!isLoading)
-    console.log(id, body)
     
     try{
       await fetch(`${url}/user/${id}/indisponibilidade`, {
@@ -119,7 +94,7 @@ const Usuarios = () => {
       toast.success('Indisponibilidade Cadastrada!')
       setIsLoading(false)
       setOpenIndisponivel(false)
-      getFuncionarios()
+      updateFuncionarios()
     } catch (error) {
       console.error('Erro ao cadastrar.', error)
       toast.error('Erro ao cadastrar.')
@@ -146,7 +121,7 @@ const Usuarios = () => {
       toast.success('Usuário Atualizado com Sucesso!')
       setOpenEdit(false)
       setIsLoading(false)
-      getFuncionarios()
+      updateFuncionarios()
     } catch (error) {
       console.error('Erro ao atualizar Usuário!', error)
       toast.error('Erro ao atualizar Usuário!')
@@ -170,7 +145,7 @@ const Usuarios = () => {
       })
       toast.success('Usuário Removido com Sucesso!')
       setOpenRemove(false)
-      getFuncionarios()
+      updateFuncionarios()
     } catch (error) {
       console.error('Erro ao remover Usuário!', error)
       toast.error('Erro ao remover Usuário!')
@@ -252,7 +227,7 @@ const Usuarios = () => {
       toast.success('Usuário Criado com Sucesso!')
       setIsLoading(false)
       setOpenCreate(false)
-      getFuncionarios()
+      updateFuncionarios()
     } catch (error) {
       console.error('Erro ao criar Usuário!', error)
       setIsLoading(false)
@@ -261,18 +236,23 @@ const Usuarios = () => {
   }
 
   useEffect(() => {
-    getFuncionarios()
-  },[])
+    updateFuncionarios()
+  },[userFilter])
 
   return(
     <div className='flex flex-col w-full h-full p-2 items-center justify-center gap-4'>
 
-      <div className='flex h-20 border w-full'>
+      <div className='flex w-full justify-center items-center gap-1 px-4'>
         <Input 
-          type='search' 
-          value={userFilter} 
+          type='search'
+          value={userFilter}
+          placeholder='Pesquisar Funcionário'
           onChange={handleSearch}
-          onKeyDown={handleKeyDown} />
+          onKeyDown={handleKeyDown}
+        />
+        <Button variant={'outline'} onClick={() => getUserByName(userFilter)}>
+          <Search />
+        </Button>
       </div>
 
       <Modal open={openCreate} openChange={() => setOpenCreate(!openCreate)} closeFooter>
@@ -330,19 +310,29 @@ const Usuarios = () => {
           </div>
         </div>
 
-        {/* Card Funcionario/User */}
         <div className='grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 justify-center items-center place-items-center gap-2'>
           {
-            funcionarios &&
-            funcionarios.map((funcionario) => (
-              <CardUser 
-                key={funcionario.id} 
-                funcionario={funcionario} 
-                handleEditUser={handleEditUser} 
-                handleRemoveUser={handleRemoveUser}
-                handleIndisponivelUser={handleIndisponivel}
-              />
-            ))
+            funcionariosFilter?.length === 0 ? (
+              funcionarios.map((funcionario) => (
+                <CardUser 
+                  key={funcionario.id} 
+                  funcionario={funcionario} 
+                  handleEditUser={handleEditUser} 
+                  handleRemoveUser={handleRemoveUser}
+                  handleIndisponivelUser={handleIndisponivel}
+                />
+              ))
+            ) : (
+              funcionariosFilter?.map((funcionario) => (
+                <CardUser 
+                  key={funcionario.id} 
+                  funcionario={funcionario} 
+                  handleEditUser={handleEditUser} 
+                  handleRemoveUser={handleRemoveUser}
+                  handleIndisponivelUser={handleIndisponivel}
+                />
+              ))
+            )
           }
         </div>
       </div>

@@ -1,16 +1,14 @@
 'use client'
 
 import { Button } from '../ui/button'
-import { Checkbox } from '../ui/checkbox'
 import { Input } from '../ui/input'
 import { Label } from '../ui/label'
 import { useForm } from 'react-hook-form'
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '../ui/form'
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form'
 import { z } from 'zod'
 import { format } from "date-fns"
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { IMaskInput } from 'react-imask'
 import { CalendarIcon } from 'lucide-react'
 import { Calendar } from '../ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'
@@ -40,7 +38,6 @@ const FormIndisponivelUser = ({ onSubmit, cancel, id }:FormIndisponivelUserProps
   })
 
   const handleSubmit = (data:z.infer<typeof schema>) => {
-    console.log(data)
     const body = {
       "dataInicio": data.startTime,
       "dataFim": data.endTime,
@@ -55,9 +52,6 @@ const FormIndisponivelUser = ({ onSubmit, cancel, id }:FormIndisponivelUserProps
       form.setValue('endTime', startTime);
     }
   }, [form.watch('startTime')]);
-
-  console.log(form.watch('startTime'))
-  console.log(form.watch('endTime'))
 
   return(
     <div className='flex flex-col w-full h-full justify-center items-center p-2'>

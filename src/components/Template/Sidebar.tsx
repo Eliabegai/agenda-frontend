@@ -1,131 +1,154 @@
 'use client'
-import { useState } from 'react';
+import { KeyboardEvent, useState } from 'react';
 import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons';
 import { Calendar } from '../ui/calendar';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { useCurrentAdminOrUser, useCurrentCliente, useCurrentDate } from '../hooks/PageContext';
+import { useCurrentAdminOrUser, useCurrentCliente, useCurrentDate, useFuncionarioContext } from '../hooks/PageContext';
 import { useRouter } from 'next/navigation';
+import UsersSidebar from '../Gerenciar/UsersSidebar';
+import { toast } from 'sonner';
 
 
 
 const Sidebar = () => {
 
-    const [funcionario, setFuncionario] = useState<string>('');
-    const { currentDate, setCurrentDate} = useCurrentDate()
-    const router = useRouter()
-
-    const handleClick = () => {
-        if(funcionario)
-          alert(`Buscar Funcionario ${funcionario} no banco de dados.`)
-        return
-      }
-      const handleClickFuncionario = () => {
-        router.push('/gerenciar')
-      }
+  const {setFuncionariosFilter} = useFuncionarioContext()
+  const [name, setName] = useState('')
+  const { currentDate, setCurrentDate} = useCurrentDate()
+  const router = useRouter()
+  const {email, getToken} = useCurrentAdminOrUser()
+  const token = getToken()
+  const url = process.env.NEXT_PUBLIC_API_URL
     
-      const gerarFuncionarios = () => {
-        return Array.from({length: 10}, (_, id) => ({
-          id: id+1,
-          nome: `Funcionario ${id + 1}`
-        }))
-      }
+  const handleClickFuncionario = () => {
+    router.push('/gerenciar')
+  }
 
-      const handleDateChange = (date: Date | undefined) => {
-        if(date) {
-          setCurrentDate(date)
+  const getUserByName = async (nome: string) => {
+    if (!token) {
+      toast.error('Token não encontrado');
+      return;
+    }
+
+    if(nome === "") {
+      setFuncionariosFilter([])
+    } else {
+      try{
+        const response = await fetch(`${url}/user/filter?nome=${nome}`, {
+          method: 'GET',
+          headers: {
+            "Content-Type": "application/json",
+            'token': token,
+            'admin': email
+          },
+        })
+        const data = await response.json()
+        setFuncionariosFilter(data.data)
+      } catch (error) {
+        console.error('Erro ao buscar os dados', error)
+        toast.error('Erro ao buscar os dados')
+      }
+    }
+  }
+
+  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        if(name) {
+          getUserByName(name)
+          toast.success(`Procurando usuário por nome: ${name}`);
+        } else {
+          setFuncionariosFilter([])
         }
       }
+    };
 
-    return(
-        <aside className="flex flex-col fixed top-20 left-0 w-72 h-full border-r border-[var(--background-azul)] p-2 items-center text-sm gap-3 overflow-auto">
-          
-          <div className="flex w-full items-center justify-center">
-            <Calendar 
-                mode="single" 
-                className="border w-auto h-auto shadow-lg shadow-primary/20 rounded-2xl" 
-                selected={currentDate} 
-                onSelect={handleDateChange} 
-                onMonthChange={handleDateChange}
-                month={currentDate}
-                weekStartsOn={0}
-            />
-          </div>
-          
-          <div className='flex w-full justify-center items-center'>
-            <Button onClick={handleClickFuncionario} className="bg-[var(--background-azul)]">Gerenciar Funcionarios</Button>
-          </div>
-          
-          <div className="flex w-64 items-center py-2 px-3 space-x-1">
-            <Input type="text" placeholder="Buscar Funcionario" value={funcionario} onChange={(e) => setFuncionario(e.target.value)} />
-            <Button onClick={handleClick} className="bg-[var(--background-azul)]" ><FontAwesomeIcon icon={faMagnifyingGlass} /></Button>
-          </div>
-          
-          <div className="flex flex-col w-full gap-1 border rounded-md py-6 mb-2 overflow-auto">
-            <ul className="border-r border-gray-400">
-              {
-                gerarFuncionarios().map((i) => {
-                  return(
-                    <li key={i.id} className="mt-2 ml-2 border-b p-2 hover:bg-secondary">{i.nome}</li>
-                  )
-                })
-              }
-            </ul>
-          </div>
+  const handleDateChange = (date: Date | undefined) => {
+    if(date) {
+      setCurrentDate(date)
+    }
+  }
 
-        </aside>
-    )
+  return(
+    <aside className="flex flex-col fixed top-20 left-0 w-72 h-full border-r border-[var(--background-azul)] p-2 items-center text-sm gap-3 overflow-auto">
+      
+      <div className="flex w-full items-center justify-center">
+        <Calendar 
+          mode="single" 
+          className="border w-auto h-auto shadow-lg shadow-primary/20 rounded-2xl" 
+          selected={currentDate} 
+          onSelect={handleDateChange} 
+          onMonthChange={handleDateChange}
+          month={currentDate}
+          weekStartsOn={0}
+        />
+      </div>
+      
+      <div className='flex w-full justify-center items-center'>
+        <Button onClick={handleClickFuncionario} className="bg-[var(--background-azul)]">Gerenciar Funcionarios</Button>
+      </div>
+      
+      <div className="flex w-64 items-center py-2 px-3 space-x-1">
+          <Input type="text" placeholder="Buscar Funcionario" value={name} onChange={(e) => setName(e.target.value)} onKeyDown={handleKeyDown} />
+        <Button onClick={() => getUserByName(name)} className="bg-[var(--background-azul)]" ><FontAwesomeIcon icon={faMagnifyingGlass} /></Button>
+      </div>
+
+      <UsersSidebar email={email} token={token} />
+
+    </aside>
+  )
 }
 
 const SidebarCliente = () => {
-    const { currentDate, setCurrentDate} = useCurrentDate()
-    const { cliente } = useCurrentCliente()
-    const { nome, role } = useCurrentAdminOrUser()
+  const { currentDate, setCurrentDate} = useCurrentDate()
+  const { cliente } = useCurrentCliente()
+  const { nome, role } = useCurrentAdminOrUser()
 
-    const handleDateChange = (date: Date | undefined) => {
-      if(date) {
-        setCurrentDate(date)
-      }
+  const handleDateChange = (date: Date | undefined) => {
+    if(date) {
+      setCurrentDate(date)
     }
+  }
 
-    return(
-        <aside className="flex flex-col fixed top-20 left-0 w-72 h-full border-r border-[var(--background-azul)] p-2 items-center text-sm gap-3 overflow-auto">
-          
-          <div className="flex w-full items-center justify-center">
-            <Calendar 
-                mode="single" 
-                className="border w-auto h-auto shadow-lg shadow-primary/20 rounded-2xl" 
-                selected={currentDate} 
-                onSelect={handleDateChange} 
-                onMonthChange={handleDateChange}
-                month={currentDate}
-                weekStartsOn={0}
-            />
-          </div>
-            {/* Cliente ao entrar no site, solicitar o nome dele para colocar no campo Cliente, depois quando preecher o formulário, já deixar o nome dele lá preenchido. */}
-          
+  return(
+    <aside className="flex flex-col fixed top-20 left-0 w-72 h-full border-r border-[var(--background-azul)] p-2 items-center text-sm gap-3 overflow-auto">
+      
+      <div className="flex w-full items-center justify-center">
+        <Calendar 
+          mode="single" 
+          className="border w-auto h-auto shadow-lg shadow-primary/20 rounded-2xl" 
+          selected={currentDate} 
+          onSelect={handleDateChange} 
+          onMonthChange={handleDateChange}
+          month={currentDate}
+          weekStartsOn={0}
+        />
+      </div>
+        {/* Cliente ao entrar no site, solicitar o nome dele para colocar no campo Cliente, depois quando preecher o formulário, já deixar o nome dele lá preenchido. */}
+      
+      {
+        role &&
+        <div className='flex flex-col justify-start w-full p-2 ml-10 mt-6 space-y-4'>
           {
-            role &&
-            <div className='flex flex-col justify-start w-full p-2 ml-10 mt-6 space-y-4'>
-              {
-                role === 'USER' ? (
-                  <div>
-                    <span>Bem vindo,</span>
-                    <h2 className='text-lg font-semibold'>{nome}</h2>
-                  </div>
-                ) : (
-                  <div>
-                    <span>Bem vindo,</span>
-                    <h2 className='text-lg font-semibold'>{cliente}</h2>
-                  </div>
-                )
-              }
-            </div>
+            role === 'USER' ? (
+              <div>
+                <span>Bem vindo,</span>
+                <h2 className='text-lg font-semibold'>{nome}</h2>
+              </div>
+            ) : (
+              <div>
+                <span>Bem vindo,</span>
+                <h2 className='text-lg font-semibold'>{cliente}</h2>
+              </div>
+            )
           }
+        </div>
+      }
 
-        </aside>
-    )
+    </aside>
+  )
 }
 
 

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Eye } from "lucide-react";
-import { format, addDays, startOfWeek, addHours} from "date-fns";
+import { format, startOfWeek, addHours} from "date-fns";
 import { ptBR } from "date-fns/locale/pt-BR";
 import { useCurrentAdminOrUser, useCurrentDate } from '../hooks/PageContext';
 import { toast } from 'sonner';
@@ -40,8 +40,8 @@ export default function AgendaGeral() {
       return;
     }
 
-    const startDate = `${dates?.[0].fullDate}T10:00:00Z`
-    const endDate = `${dates?.[6].fullDate}T10:00:00Z`
+    const startDate = `${dates?.[0]?.fullDate}T10:00:00Z`
+    const endDate = `${dates?.[6]?.fullDate}T10:00:00Z`
 
     try{
       const response = await fetch(`${url}/agendamento/filter?start=${startDate}&end=${endDate}`, {
@@ -91,7 +91,7 @@ export default function AgendaGeral() {
   const agruparAgendamentosPorHorario = (agendamentos: IAgendamento[]) => {
     const agendamentosAgrupados: { [key: string]: number } = {};
 
-    agendamentos.forEach(agendamento => {
+    agendamentos?.forEach(agendamento => {
       const dataHora = new Date(agendamento.dataHora);
       const dia = format(dataHora, 'yyyy-MM-dd');
       const hora = format(dataHora, 'HH:mm');
