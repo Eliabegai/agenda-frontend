@@ -3,6 +3,7 @@ interface ICliente {
   nome: string;
   telefone: string;
   email: string;
+  criadoEm: string
 }
 
 interface IProtocolo {

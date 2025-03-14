@@ -6,6 +6,8 @@ interface VisualizarAgendaProps {
 
 const VisualizarAgenda = ({agendamentos}: VisualizarAgendaProps) => {
 
+  console.log('agendamentos componente', agendamentos)
+
   return(
     <div>
       <div className='flex flex-col w-full space-y-3 p-2 overflow-auto h-96'>

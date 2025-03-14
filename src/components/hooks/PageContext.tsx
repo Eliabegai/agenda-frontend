@@ -45,9 +45,14 @@ interface FuncionarioContextProps {
   funcionarios: IFuncionario[]
   funcionariosFilter: IFuncionario[]
   funcionario: IFuncionario | null
+  agendamentos: IAgendamento[]
+  getToken: () => string | null
+  getUserData: () => UserDataProps | null
   setFuncionarios: (funcionarios: IFuncionario[]) => void
   setFuncionariosFilter: (funcionarios: IFuncionario[]) => void
   setFuncionario: (funcionario: IFuncionario) => void
+  setAgendamentos: (agendamento: IAgendamento[]) => void
+  getAgendamentosByFuncionario: (id: string) => void
 }
 
 const CurrentDateContext = createContext<CurrentDateContextProps | undefined>(undefined);
@@ -61,6 +66,7 @@ export const ContextProvider = ({ children }: { children: ReactNode }) => {
   const [funcionarios, setFuncionarios] = useState<IFuncionario[]>([])
   const [funcionariosFilter, setFuncionariosFilter] = useState<IFuncionario[]>([])
   const [funcionario, setFuncionario] = useState<IFuncionario | null>(null)
+  const [agendamentos, setAgendamentos] = useState<IAgendamento[]>([])
   const [currentDate, setCurrentDate] = useState(new Date());
   const [cliente, setClienteState] = useState('')
   const [role, setRoleState] = useState('')
@@ -163,11 +169,35 @@ export const ContextProvider = ({ children }: { children: ReactNode }) => {
     }
   }
 
+  const getAgendamentosByFuncionario = async (id: string) => {
+    const token = getToken()
+    if (!token) {
+      toast.error('Token não encontrado');
+      return;
+    }
+    
+    try{
+      const response = await fetch(`${url}/user/${id}`, {
+        method: 'GET',
+        headers: {
+          "Content-Type": "application/json",
+          'token': token,
+          'admin': email
+        },
+      })
+      const data = await response.json()
+      setAgendamentos(data?.data?.agendamentos)
+    } catch (error) {
+      console.error('Erro ao buscar os dados', error)
+      toast.error('Erro ao buscar os dados')
+    }
+  }
+
   return (
     <CurrentDateContext.Provider value={{ currentDate, setCurrentDate, changeWeek }}>
       <CurrentClienteContext.Provider value={{ cliente, role, setCliente, setRole, getToken, saveToken }}>
         <CurrentAdminOrUserContext.Provider value={{role, email, nome, id, setEmail, setNome, setRole, setId, getToken, saveToken, getUserData, Logout, updateFuncionarios }}>
-          <FuncionarioContext.Provider value={{funcionario, funcionarios, funcionariosFilter, setFuncionario, setFuncionarios, setFuncionariosFilter}}>
+          <FuncionarioContext.Provider value={{funcionario, funcionarios, funcionariosFilter, agendamentos, setAgendamentos, setFuncionario, setFuncionarios, setFuncionariosFilter, getAgendamentosByFuncionario, getUserData, getToken}}>
             {children}
           </FuncionarioContext.Provider>
         </CurrentAdminOrUserContext.Provider>
