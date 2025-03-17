@@ -6,9 +6,11 @@ import { useRouter } from 'next/navigation';
 
 export default function Home() {
   const router = useRouter()
+  
   useEffect(() => {
     router.push('/agenda')
   },[])
+
   return (
     <Pagina>
       <div>

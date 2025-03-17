@@ -21,6 +21,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'
 import { Textarea } from '../ui/textarea'
 import { Calendar } from '../ui/calendar'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogTitle } from '../ui/alert-dialog'
+import { SkeletonIndisponibilidadeItem } from '../Skeletons/SkeletonIndisponibilidade'
 
 
 interface EmployeeEditFormProps {
@@ -114,6 +115,8 @@ export default function EmployeeEditForm({ open, setOpen }: EmployeeEditFormProp
   const url = process.env.NEXT_PUBLIC_API_URL
   const token = getToken()
   const [showMessage, setShowMessage] = useState(false)
+  const [showMessageIndisponivel, setShowMessageIndisponivel] = useState(false)
+  const [loading, setLoading] = useState(false)
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
@@ -267,7 +270,7 @@ export default function EmployeeEditForm({ open, setOpen }: EmployeeEditFormProp
     }
   }
 
-  function onIndisponibilidadeSubmit(data: z.infer<typeof indisponibilidadeFormSchema>) {
+  async function onIndisponibilidadeSubmit(data: z.infer<typeof indisponibilidadeFormSchema>) {
     const dataInicioCompleta = new Date(data.dataInicio)
     const [horaInicio, minutoInicio] = data.horaInicio.split(":").map(Number)
     dataInicioCompleta.setHours(horaInicio, minutoInicio)
@@ -275,26 +278,54 @@ export default function EmployeeEditForm({ open, setOpen }: EmployeeEditFormProp
     const dataFimCompleta = new Date(data.dataFim)
     const [horaFim, minutoFim] = data.horaFim.split(":").map(Number)
     dataFimCompleta.setHours(horaFim, minutoFim)
+    
+    setLoading(true)
 
-    const novaIndisponibilidade: IIndisponibilidade = {
+    if (!token) {
+      toast.error('Token não encontrado');
+      return;
+    }
+
+    if (!funcionario) {
+      toast.error('Funcionario não encontrado');
+      return;
+    }
+
+    const novaIndisponibilidade = {
       dataInicio: dataInicioCompleta.toString(),
       dataFim: dataFimCompleta.toString(),
       motivo: data.motivo,
     }
 
-    setIndisponibilidades([...indisponibilidades, novaIndisponibilidade])
+    try{
+      await fetch(`${url}/user/${funcionario.id}/indisponibilidade`, {
+        method: 'POST',
+        headers: {
+          "Content-Type": "application/json",
+          'token': token,
+        },
+        body: JSON.stringify(novaIndisponibilidade)
+      })
+    } catch (error) {
+      console.error('Erro ao buscar os dados', error)
+      toast.error('Erro ao buscar os dados')
+    } finally {
+      toast.success("Indisponibilidade registrada",{
+        description: "O período de indisponibilidade foi registrado com sucesso.",
+      })
+      
+      updateFuncionario(funcionario.id)
+      setLoading(false)
 
-    toast.success("Indisponibilidade registrada",{
-      description: "O período de indisponibilidade foi registrado com sucesso.",
-    })
+      indisponibilidadeForm.reset({
+        dataInicio: new Date(),
+        horaInicio: "09:00",
+        dataFim: new Date(),
+        horaFim: "18:00",
+        motivo: "",
+      })
+    }
 
-    indisponibilidadeForm.reset({
-      dataInicio: new Date(),
-      horaInicio: "09:00",
-      dataFim: new Date(),
-      horaFim: "18:00",
-      motivo: "",
-    })
   }
 
   function editHorario(horario: IHorario) {
@@ -308,14 +339,47 @@ export default function EmployeeEditForm({ open, setOpen }: EmployeeEditFormProp
     })
   }
 
-  function removeIndisponibilidade(index: number) {
-    const novasIndisponibilidades = [...indisponibilidades]
-    novasIndisponibilidades.splice(index, 1)
-    setIndisponibilidades(novasIndisponibilidades)
+  async function removeIndisponibilidade(id: string) {
 
-    toast.success("Indisponibilidade removida",{
-      description: "O período de indisponibilidade foi removido com sucesso.",
-    })
+    if (!token) {
+      toast.error('Token não encontrado');
+      return;
+    }
+
+    if (!funcionario) {
+      toast.error('Funcionario não encontrado');
+      return;
+    }
+
+    try{
+      await fetch(`${url}/user/${funcionario.id}/indisponibilidade/${id}`, {
+        method: 'DELETE',
+        headers: {
+          "Content-Type": "application/json",
+          'token': token,
+        },
+      })
+    } catch (error) {
+      console.error('Erro ao buscar os dados', error)
+      toast.error('Erro ao buscar os dados')
+    } finally {
+      toast.success("Indisponibilidade removida",{
+        description: "O período de indisponibilidade foi removido com sucesso.",
+      })
+      
+      updateFuncionario(funcionario.id)
+      setShowMessageIndisponivel(false)
+      setLoading(false)
+
+      indisponibilidadeForm.reset({
+        dataInicio: new Date(),
+        horaInicio: "09:00",
+        dataFim: new Date(),
+        horaFim: "18:00",
+        motivo: "",
+      })
+    }
+    
   }
 
   const handleCreateHorario = () => {
@@ -344,6 +408,9 @@ export default function EmployeeEditForm({ open, setOpen }: EmployeeEditFormProp
   useEffect(() => {
     if (funcionario) {
       profileForm.setValue('nome', funcionario.nome)
+      if(funcionario.indisponibilidades) {
+        setIndisponibilidades(funcionario.indisponibilidades)
+      }
     }
   }, [funcionario, profileForm])
 
@@ -360,6 +427,7 @@ export default function EmployeeEditForm({ open, setOpen }: EmployeeEditFormProp
     }
   }, [editingHorario, horarioForm]);
 
+  console.log(indisponibilidades)
   return(
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="sm:max-w-[800px] flex flex-col max-h-[90vh] overflow-auto">
@@ -505,7 +573,6 @@ export default function EmployeeEditForm({ open, setOpen }: EmployeeEditFormProp
               </Card>
             </TabsContent>
 
-            {/* Aba de Horários */} 
             <TabsContent value="horarios">
               <Card>
                 <CardHeader>
@@ -692,7 +759,6 @@ export default function EmployeeEditForm({ open, setOpen }: EmployeeEditFormProp
               </Card>
             </TabsContent>
 
-            {/* Aba de Indisponibilidade */}
             <TabsContent value="indisponibilidade">
               <Card>
                 <CardHeader>
@@ -829,6 +895,8 @@ export default function EmployeeEditForm({ open, setOpen }: EmployeeEditFormProp
                         <Plus className="h-4 w-4 mr-2" />
                         Adicionar Indisponibilidade
                       </Button>
+                      <AlertDialog open={showMessage} onOpenChange={() => setShowMessage(!showMessage)}>
+                      </AlertDialog>
                     </CardContent>
                   </form>
                 </Form>
@@ -838,14 +906,18 @@ export default function EmployeeEditForm({ open, setOpen }: EmployeeEditFormProp
                 </CardHeader>
                 <CardContent>
                   {indisponibilidades.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-6 text-center text-muted-foreground">
-                      <AlertCircle className="h-10 w-10 mb-2" />
-                      <p>Nenhum período de indisponibilidade registrado.</p>
-                    </div>
+                      loading ? (
+                        <SkeletonIndisponibilidadeItem />
+                    ) : (
+                      <div className="flex flex-col items-center justify-center py-6 text-center text-muted-foreground">
+                        <AlertCircle className="h-10 w-10 mb-2" />
+                        <p>Nenhum período de indisponibilidade registrado.</p>
+                      </div>
+                    )
                   ) : (
                     <div className="space-y-4">
-                      {indisponibilidades.map((indisponibilidade, index) => (
-                        <div key={index} className="flex justify-between items-center p-4 border rounded-md">
+                      {indisponibilidades && indisponibilidades.map((indisponibilidade) => (
+                        <div key={indisponibilidade.id} className="flex justify-between items-center p-4 border rounded-md">
                           <div>
                             <div className="font-medium">
                               {format(new Date(indisponibilidade.dataInicio), "dd/MM/yyyy HH:mm", { locale: ptBR })} até{" "}
@@ -855,9 +927,22 @@ export default function EmployeeEditForm({ open, setOpen }: EmployeeEditFormProp
                               <div className="text-sm text-muted-foreground mt-1">{indisponibilidade.motivo}</div>
                             )}
                           </div>
-                          <Button variant="ghost" size="icon" onClick={() => removeIndisponibilidade(index)}>
+                          <Button variant="ghost" size="icon" onClick={() => setShowMessageIndisponivel(!showMessageIndisponivel)}>
                             <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
+                          
+                          <AlertDialog open={showMessageIndisponivel} onOpenChange={() => setShowMessageIndisponivel(!showMessageIndisponivel)}>
+                            <AlertDialogContent>
+                              <AlertDialogTitle>Você tem certeza disso?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Tem certeza que deseja remover esta indisponibilidade?
+                              </AlertDialogDescription>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <Button variant={'destructive'} onClick={() => removeIndisponibilidade(indisponibilidade.id)}>Continue</Button>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                         </div>
                       ))}
                     </div>

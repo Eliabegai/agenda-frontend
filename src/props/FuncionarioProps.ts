@@ -19,7 +19,7 @@ interface IHorario {
 }
 
 interface IIndisponibilidade {
-  id?: string;
+  id: string;
   inicio?: string;
   fim?: string;
   dataInicio: string;
