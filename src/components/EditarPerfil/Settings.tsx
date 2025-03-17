@@ -1,0 +1,782 @@
+"use client"
+
+import { AlertCircle, Calendar as Calendario, CalendarIcon, Clock, Plus, Save, Trash2, User, EyeOff, Eye } from 'lucide-react'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog'
+import { useFuncionarioContext } from '../hooks/PageContext'
+import { useEffect, useState } from 'react'
+import { Badge } from '../ui/badge'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs'
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../ui/card'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table'
+import { format } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
+import { useForm } from 'react-hook-form'
+import { toast } from 'sonner'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '../ui/form'
+import { Input } from '../ui/input'
+import { Button } from '../ui/button'
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'
+import { Textarea } from '../ui/textarea'
+import { Calendar } from '../ui/calendar'
+
+
+interface EmployeeEditFormProps {
+  open: boolean
+  setOpen: () => void
+}
+
+const getDiaSemana = (dia: number): string => {
+  const diasSemana = [
+    "Domingo",
+    "Segunda-feira",
+    "Terça-feira",
+    "Quarta-feira",
+    "Quinta-feira",
+    "Sexta-feira",
+    "Sábado",
+  ]
+  return diasSemana[dia] || ""
+}
+
+// Esquemas de validação
+const profileFormSchema = z.object({
+    nome: z.string().min(2, {message: "O nome deve ter pelo menos 2 caracteres.",}),
+    senha: z.string().min(6, {message: "A senha deve ter pelo menos 6 caracteres.",}).optional(),
+    confirmarSenha: z.string().optional(),
+    senhaAtual: z.string().optional(),
+  })
+  .refine(
+    (data) => {
+      if (data.senha && !data.confirmarSenha) return false
+      if (!data.senha && data.confirmarSenha) return false
+      if (data.senha && data.confirmarSenha && data.senha !== data.confirmarSenha) return false
+      return true
+    },
+    {
+      message: "As senhas não coincidem",
+      path: ["confirmarSenha"],
+    },
+  )
+
+const horarioFormSchema = z.object({
+  id: z.string(),
+  diaSemana: z.number().min(0).max(6),
+  startTime: z.string(),
+  endTime: z.string(),
+  breakStart: z.string(),
+  breakEnd: z.string(),
+})
+
+const formatTime = (time: string) => {
+  // Se o tempo já tiver segundos, retorna como está
+  if (time.length === 8) return time;
+  // Se for "HH:MM", adiciona ":00" no final
+  return `${time}:00`;
+};
+
+const indisponibilidadeFormSchema = z
+  .object({
+    dataInicio: z.date({
+      required_error: "A data de início é obrigatória.",
+    }),
+    horaInicio: z.string({
+      required_error: "A hora de início é obrigatória.",
+    }),
+    dataFim: z.date({
+      required_error: "A data de fim é obrigatória.",
+    }),
+    horaFim: z.string({
+      required_error: "A hora de fim é obrigatória.",
+    }),
+    motivo: z.string().optional(),
+  })
+  .refine(
+    (data) => {
+      const dataInicioCompleta = new Date(data.dataInicio)
+      const [horaInicio, minutoInicio] = data.horaInicio.split(":").map(Number)
+      dataInicioCompleta.setHours(horaInicio, minutoInicio)
+
+      const dataFimCompleta = new Date(data.dataFim)
+      const [horaFim, minutoFim] = data.horaFim.split(":").map(Number)
+      dataFimCompleta.setHours(horaFim, minutoFim)
+
+      return dataFimCompleta > dataInicioCompleta
+    },
+    {
+      message: "A data/hora de fim deve ser posterior à data/hora de início",
+      path: ["dataFim"],
+    },
+  )
+
+export default function EmployeeEditForm({ open, setOpen }: EmployeeEditFormProps) {
+
+  const [editingHorario, setEditingHorario] = useState<IHorario | null>(null)
+  const {funcionario, getFuncionarioById, getUserData, getToken, updateFuncionario} = useFuncionarioContext()
+  const funcionarioId = getUserData()?.id
+  const [indisponibilidades, setIndisponibilidades] = useState<IIndisponibilidade[]>(funcionario?.indisponibilidades || [])
+  const [showPassword, setShowPassword] = useState<boolean>(false);
+  const url = process.env.NEXT_PUBLIC_API_URL
+  const token = getToken()
+
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
+
+  // Formulário de perfil
+  const profileForm = useForm<z.infer<typeof profileFormSchema>>({
+    resolver: zodResolver(profileFormSchema),
+    defaultValues: {
+      nome: funcionario?.nome
+    },
+  })
+
+  // Formulário de horário
+  const horarioForm = useForm<z.infer<typeof horarioFormSchema>>({
+    resolver: zodResolver(horarioFormSchema),
+    defaultValues: {
+      id: editingHorario?.id || '',
+      diaSemana: Number(editingHorario?.diaSemana) || 0,
+      startTime: editingHorario?.startTime || '',
+      endTime: editingHorario?.endTime || '',
+      breakStart: editingHorario?.breakStart || '',
+      breakEnd: editingHorario?.breakEnd || '',
+    },
+  });
+
+  const indisponibilidadeForm = useForm<z.infer<typeof indisponibilidadeFormSchema>>({
+    resolver: zodResolver(indisponibilidadeFormSchema),
+    defaultValues: {
+      dataInicio: new Date(),
+      horaInicio: "09:00",
+      dataFim: new Date(),
+      horaFim: "18:00",
+      motivo: "",
+    },
+  })
+
+  async function onProfileSubmit(data: z.infer<typeof profileFormSchema>) {
+    console.log("Dados do perfil:", data)
+
+    if (!token) {
+      toast.error('Token não encontrado');
+      return;
+    }
+
+    if (!funcionario) {
+      toast.error('Funcionario não encontrado');
+      return;
+    }
+
+    const body = {
+      "senhaAntiga": data.senhaAtual,
+      "novaSenha": data.confirmarSenha,
+      "nome": data.nome
+    }
+
+    try{
+      await fetch(`${url}/user/${funcionario.id}`, {
+        method: 'PATCH',
+        headers: {
+          "Content-Type": "application/json",
+          'token': token,
+        },
+        body: JSON.stringify(body)
+      })
+      toast.success("Perfil atualizado",{
+        description: "As informações do perfil foram atualizadas com sucesso.",
+      })
+      updateFuncionario(funcionario.id)
+      setOpen()
+    } catch (error) {
+      console.error('Erro ao buscar os dados', error)
+      toast.error('Erro ao buscar os dados')
+    }
+  }
+
+  async function onHorarioSubmit(data: z.infer<typeof horarioFormSchema>) {
+    
+    console.log("Dados do horário:", data)
+
+    if (!token) {
+      toast.error('Token não encontrado');
+      return;
+    }
+
+    if (!funcionario) {
+      toast.error('Funcionario não encontrado');
+      return;
+    }
+   
+    const body = {
+      "horarios": [{
+        "id": data.id,
+        "diaSemana": data.diaSemana,
+        "startTime": formatTime(data.startTime),
+        "endTime": formatTime(data.endTime),
+        "breakStart": formatTime(data.breakStart),
+        "breakEnd": formatTime(data.breakEnd)
+      }]
+    }
+
+    try{
+      await fetch(`${url}/user/${funcionario.id}`, {
+        method: 'PATCH',
+        headers: {
+          "Content-Type": "application/json",
+          'token': token,
+        },
+        body: JSON.stringify(body)
+      })
+      toast.success("Horário atualizado",{
+        description: "O horário foi atualizado com sucesso.",
+      })
+      updateFuncionario(funcionario.id)
+      setEditingHorario(null)
+      // setOpen()
+    } catch (error) {
+      console.error('Erro ao buscar os dados', error)
+      toast.error('Erro ao buscar os dados')
+    }
+  }
+
+  function onIndisponibilidadeSubmit(data: z.infer<typeof indisponibilidadeFormSchema>) {
+    const dataInicioCompleta = new Date(data.dataInicio)
+    const [horaInicio, minutoInicio] = data.horaInicio.split(":").map(Number)
+    dataInicioCompleta.setHours(horaInicio, minutoInicio)
+
+    const dataFimCompleta = new Date(data.dataFim)
+    const [horaFim, minutoFim] = data.horaFim.split(":").map(Number)
+    dataFimCompleta.setHours(horaFim, minutoFim)
+
+    const novaIndisponibilidade: IIndisponibilidade = {
+      dataInicio: dataInicioCompleta.toString(),
+      dataFim: dataFimCompleta.toString(),
+      motivo: data.motivo,
+    }
+
+    setIndisponibilidades([...indisponibilidades, novaIndisponibilidade])
+
+    toast.success("Indisponibilidade registrada",{
+      description: "O período de indisponibilidade foi registrado com sucesso.",
+    })
+
+    indisponibilidadeForm.reset({
+      dataInicio: new Date(),
+      horaInicio: "09:00",
+      dataFim: new Date(),
+      horaFim: "18:00",
+      motivo: "",
+    })
+  }
+
+  function editHorario(horario: IHorario) {
+    setEditingHorario(horario)
+    horarioForm.reset({
+      id: horario.id,
+      startTime: horario.startTime.substring(0, 5),
+      endTime: horario.endTime.substring(0, 5),
+      breakStart: horario.breakStart.substring(0, 5),
+      breakEnd: horario.breakEnd.substring(0, 5),
+    })
+  }
+
+  function removeIndisponibilidade(index: number) {
+    const novasIndisponibilidades = [...indisponibilidades]
+    novasIndisponibilidades.splice(index, 1)
+    setIndisponibilidades(novasIndisponibilidades)
+
+    toast.success("Indisponibilidade removida",{
+      description: "O período de indisponibilidade foi removido com sucesso.",
+    })
+  }
+
+  useEffect(() => {
+    if(!funcionarioId) return
+    getFuncionarioById(funcionarioId)
+  },[])
+
+  useEffect(() => {
+    if (funcionario) {
+      profileForm.setValue('nome', funcionario.nome)
+    }
+  }, [funcionario, profileForm])
+
+  useEffect(() => {
+    if (editingHorario) {
+      horarioForm.reset({
+        id: editingHorario.id,
+        diaSemana: Number(editingHorario.diaSemana),
+        startTime: editingHorario.startTime,
+        endTime: editingHorario.endTime,
+        breakStart: editingHorario.breakStart,
+        breakEnd: editingHorario.breakEnd,
+      });
+    }
+  }, [editingHorario, horarioForm]);
+
+  console.log('horarioForm', horarioForm.watch())
+  console.log('editingHorario', editingHorario?.diaSemana)
+  return(
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogContent className="sm:max-w-[800px] flex flex-col max-h-[90vh] overflow-auto">
+        <DialogHeader className="sticky top-0 z-10 bg-background pb-4">
+          <DialogTitle className="flex items-center gap-2">
+            <User className="h-5 w-5" />
+            Detalhes do Funcionário
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="mb-4 sticky top-[60px] z-10 bg-background">
+          <div className="flex flex-col space-y-1">
+            <h3 className="text-xl font-bold">{funcionario?.nome}</h3>
+            <p className="text-sm text-muted-foreground">{funcionario?.email}</p>
+            <Badge className="w-fit mt-1" variant={funcionario?.role === "ADMIN" ? "destructive" : "default"}>
+              {funcionario?.role}
+            </Badge>
+          </div>
+        </div>
+
+        <Tabs defaultValue="profile" className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="profile">
+              <User className="h-4 w-4 mr-2" />
+              Perfil
+            </TabsTrigger>
+            <TabsTrigger value="horarios">
+              <Clock className="h-4 w-4 mr-2" />
+              Horários
+            </TabsTrigger>
+            <TabsTrigger value="indisponibilidade">
+              <Calendario className="h-4 w-4 mr-2" />
+              Indisponibilidade
+            </TabsTrigger>
+          </TabsList>
+
+          <div className="flex-1 overflow-y-auto mt-4">
+            <TabsContent value="profile">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Informações do Perfil</CardTitle>
+                  <CardDescription>Atualize as informações básicas do funcionário.</CardDescription>
+                </CardHeader>
+                <Form {...profileForm}>
+                  <form onSubmit={profileForm.handleSubmit(onProfileSubmit)}>
+                    <CardContent className="space-y-4">
+                      <FormField
+                        control={profileForm.control}
+                        name="nome"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Nome</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Nome do funcionário" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <div className="flex items-center">
+                        <Badge variant="outline" className="mr-2">
+                          {funcionario?.email}
+                        </Badge>
+                        <Badge>{funcionario?.role}</Badge>
+                      </div>
+
+                      <FormField
+                        control={profileForm.control}
+                        name="senha"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Nova Senha</FormLabel>
+                            <FormControl>
+                              <div className="relative">
+                                <Input type={showPassword ? "text" : "password"} placeholder="Nova senha" {...field} />
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  className="absolute right-0 top-0 h-full px-3 py-2"
+                                  onClick={togglePasswordVisibility}
+                                  tabIndex={-1}
+                                >
+                                  {showPassword ? (
+                                    <EyeOff className="h-4 w-4 text-muted-foreground" />
+                                  ) : (
+                                    <Eye className="h-4 w-4 text-muted-foreground" />
+                                  )}
+                                  <span className="sr-only">{showPassword ? "Ocultar senha" : "Mostrar senha"}</span>
+                                </Button>
+                              </div>
+                            </FormControl>
+                            <FormDescription>Deixe em branco para manter a senha atual.</FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={profileForm.control}
+                        name="confirmarSenha"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Confirmar Senha</FormLabel>
+                            <FormControl>
+                            <div className="relative">
+                              <Input
+                                type={showPassword ? "text" : "password"}
+                                placeholder="Confirme a nova senha"
+                                {...field}
+                              />
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="absolute right-0 top-0 h-full px-3 py-2"
+                                onClick={togglePasswordVisibility}
+                                tabIndex={-1}
+                              >
+                                {showPassword ? (
+                                  <EyeOff className="h-4 w-4 text-muted-foreground" />
+                                ) : (
+                                  <Eye className="h-4 w-4 text-muted-foreground" />
+                                )}
+                                <span className="sr-only">{showPassword ? "Ocultar senha" : "Mostrar senha"}</span>
+                              </Button>
+                            </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </CardContent>
+                    <CardFooter className='mt-4'>
+                      <Button type="submit" variant={'outline'}>
+                        <Save className="h-4 w-4 mr-2" />
+                        Salvar Alterações
+                      </Button>
+                    </CardFooter>
+                  </form>
+                </Form>
+              </Card>
+            </TabsContent>
+
+            {/* Aba de Horários */} 
+            <TabsContent value="horarios">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Horários de Trabalho</CardTitle>
+                  <CardDescription>Visualize e edite os horários de trabalho do funcionário.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Table className="table-fixed">
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-1/5">Dia</TableHead>
+                        <TableHead className="w-1/5">Início</TableHead>
+                        <TableHead className="w-1/5">Fim</TableHead>
+                        <TableHead className="w-1/5">Intervalo</TableHead>
+                        <TableHead className="w-1/5">Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {funcionario?.horarios
+                        .sort((a, b) => a.diaSemana - b.diaSemana)
+                        .map((horario) => (
+                          <TableRow key={horario.id}>
+                            <TableCell className="font-medium">{getDiaSemana(horario.diaSemana)}</TableCell>
+                            <TableCell>{horario.startTime.substring(0, 5)}</TableCell>
+                            <TableCell>{horario.endTime.substring(0, 5)}</TableCell>
+                            <TableCell>
+                              {horario.breakStart.substring(0, 5)} - {horario.breakEnd.substring(0, 5)}
+                            </TableCell>
+                            <TableCell>
+                              <Button variant="outline" size="sm" onClick={() => editHorario(horario)}>
+                                Editar
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                    </TableBody>
+                  </Table>
+
+                  {editingHorario && (
+                    <div className="mt-6 border rounded-md p-4">
+                      <h3 className="text-lg font-medium mb-4">
+                        Editar Horário - {getDiaSemana(editingHorario.diaSemana)}
+                      </h3>
+                      <Form {...horarioForm}>
+                        <form onSubmit={horarioForm.handleSubmit(onHorarioSubmit)} className="space-y-4">
+                          <FormField
+                              control={horarioForm.control}
+                              name="diaSemana"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Dia da Semana</FormLabel>
+                                  <FormControl>
+                                    <Input 
+                                      type="hidden"
+                                      {...field}
+                                      value={field.value}
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          <div className="grid grid-cols-2 gap-4">
+                            <FormField
+                              control={horarioForm.control}
+                              name="startTime"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Horário de Início</FormLabel>
+                                  <FormControl>
+                                    <Input type="time" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+
+                            <FormField
+                              control={horarioForm.control}
+                              name="endTime"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Horário de Fim</FormLabel>
+                                  <FormControl>
+                                    <Input type="time" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-4">
+                            <FormField
+                              control={horarioForm.control}
+                              name="breakStart"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Início do Intervalo</FormLabel>
+                                  <FormControl>
+                                    <Input type="time" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+
+                            <FormField
+                              control={horarioForm.control}
+                              name="breakEnd"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Fim do Intervalo</FormLabel>
+                                  <FormControl>
+                                    <Input type="time" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+
+                          <div className="flex justify-end space-x-2">
+                            <Button type="button" variant="outline" onClick={() => setEditingHorario(null)}>
+                              Cancelar
+                            </Button>
+                            <Button type="submit">Salvar Horário</Button>
+                          </div>
+                        </form>
+                      </Form>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Aba de Indisponibilidade */}
+            <TabsContent value="indisponibilidade">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Registrar Indisponibilidade</CardTitle>
+                  <CardDescription>Registre períodos em que o funcionário não estará disponível.</CardDescription>
+                </CardHeader>
+                <Form {...indisponibilidadeForm}>
+                  <form onSubmit={indisponibilidadeForm.handleSubmit(onIndisponibilidadeSubmit)}>
+                    <CardContent className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-4">
+                          <FormField
+                            control={indisponibilidadeForm.control}
+                            name="dataInicio"
+                            render={({ field }) => (
+                              <FormItem className="flex flex-col">
+                                <FormLabel>Data de Início</FormLabel>
+                                <Popover>
+                                  <PopoverTrigger asChild>
+                                    <FormControl>
+                                      <Button variant={"outline"} className="w-full pl-3 text-left font-normal">
+                                        {field.value ? (
+                                          format(field.value, "dd/MM/yyyy", { locale: ptBR })
+                                        ) : (
+                                          <span>Selecione uma data</span>
+                                        )}
+                                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                      </Button>
+                                    </FormControl>
+                                  </PopoverTrigger>
+                                  <PopoverContent className="w-auto p-0" align="start">
+                                    <Calendar
+                                      mode="single"
+                                      selected={field.value}
+                                      onSelect={field.onChange}
+                                      disabled={(date) => date < new Date()}
+                                      initialFocus
+                                    />
+                                  </PopoverContent>
+                                </Popover>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={indisponibilidadeForm.control}
+                            name="horaInicio"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Hora de Início</FormLabel>
+                                <FormControl>
+                                  <Input type="time" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+
+                        <div className="space-y-4">
+                          <FormField
+                            control={indisponibilidadeForm.control}
+                            name="dataFim"
+                            render={({ field }) => (
+                              <FormItem className="flex flex-col">
+                                <FormLabel>Data de Fim</FormLabel>
+                                <Popover>
+                                  <PopoverTrigger asChild>
+                                    <FormControl>
+                                      <Button variant={"outline"} className="w-full pl-3 text-left font-normal">
+                                        {field.value ? (
+                                          format(field.value, "dd/MM/yyyy", { locale: ptBR })
+                                        ) : (
+                                          <span>Selecione uma data</span>
+                                        )}
+                                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                      </Button>
+                                    </FormControl>
+                                  </PopoverTrigger>
+                                  <PopoverContent className="w-auto p-0" align="start">
+                                    <Calendar
+                                      mode="single"
+                                      selected={field.value}
+                                      onSelect={field.onChange}
+                                      disabled={(date) => {
+                                        const dataInicio = indisponibilidadeForm.getValues("dataInicio")
+                                        return date < dataInicio
+                                      }}
+                                      initialFocus
+                                    />
+                                  </PopoverContent>
+                                </Popover>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={indisponibilidadeForm.control}
+                            name="horaFim"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Hora de Fim</FormLabel>
+                                <FormControl>
+                                  <Input type="time" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                      </div>
+
+                      <FormField
+                        control={indisponibilidadeForm.control}
+                        name="motivo"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Motivo (opcional)</FormLabel>
+                            <FormControl>
+                              <Textarea
+                                placeholder="Descreva o motivo da indisponibilidade"
+                                className="resize-none"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <Button type="submit" variant={'outline'} className="w-full">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Adicionar Indisponibilidade
+                      </Button>
+                    </CardContent>
+                  </form>
+                </Form>
+
+                <CardHeader className="pt-0">
+                  <CardTitle className="text-lg">Períodos de Indisponibilidade</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {indisponibilidades.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-6 text-center text-muted-foreground">
+                      <AlertCircle className="h-10 w-10 mb-2" />
+                      <p>Nenhum período de indisponibilidade registrado.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {indisponibilidades.map((indisponibilidade, index) => (
+                        <div key={index} className="flex justify-between items-center p-4 border rounded-md">
+                          <div>
+                            <div className="font-medium">
+                              {format(new Date(indisponibilidade.dataInicio), "dd/MM/yyyy HH:mm", { locale: ptBR })} até{" "}
+                              {format(new Date(indisponibilidade.dataFim), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+                            </div>
+                            {indisponibilidade.motivo && (
+                              <div className="text-sm text-muted-foreground mt-1">{indisponibilidade.motivo}</div>
+                            )}
+                          </div>
+                          <Button variant="ghost" size="icon" onClick={() => removeIndisponibilidade(index)}>
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </div>
+        </Tabs>
+      </DialogContent>
+    </Dialog>
+  )
+}

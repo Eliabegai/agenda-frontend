@@ -53,6 +53,8 @@ interface FuncionarioContextProps {
   setFuncionario: (funcionario: IFuncionario) => void
   setAgendamentos: (agendamento: IAgendamento[]) => void
   getAgendamentosByFuncionario: (id: string) => void
+  getFuncionarioById: (id: string) => void
+  updateFuncionario: (id: string) => void
 }
 
 const CurrentDateContext = createContext<CurrentDateContextProps | undefined>(undefined);
@@ -193,11 +195,69 @@ export const ContextProvider = ({ children }: { children: ReactNode }) => {
     }
   }
 
+  const getFuncionarioById = async (id: string) => {
+    const token = getToken()
+    if (!token) {
+      toast.error('Token não encontrado');
+      return;
+    }
+    
+    try{
+      const response = await fetch(`${url}/user/${id}`, {
+        method: 'GET',
+        headers: {
+          "Content-Type": "application/json",
+          'token': token,
+          'admin': email
+        },
+      })
+      const data = await response.json()
+      setFuncionario(data.data)
+    } catch (error) {
+      console.error('Erro ao buscar os dados', error)
+      toast.error('Erro ao buscar os dados')
+    }
+  }
+
+  const updateFuncionario = async (id: string) => {
+    const token = getToken()
+    if (!token) {
+      toast.error('Token não encontrado');
+      return;
+    }
+    
+    try{
+      const response = await fetch(`${url}/user/${id}`, {
+        method: 'GET',
+        headers: {
+          "Content-Type": "application/json",
+          'token': token,
+          'admin': email
+        },
+      })
+      const data = await response.json()
+      setFuncionario(data.data)
+    } catch (error) {
+      console.error('Erro ao buscar os dados', error)
+      toast.error('Erro ao buscar os dados')
+    }
+  }
+
+  const saveInStorage = (nome: string, role: string, email:string, id:string) => {
+    const storageItens = { 'user': nome, 'role': role, 'email': email, 'id': id }
+    localStorage.setItem('user', JSON.stringify(storageItens))
+  }
+
+  useEffect(() => {
+    if(funcionario)
+      saveInStorage(funcionario.nome, funcionario.role, funcionario?.email, funcionario.id)
+  },[funcionario])
+
   return (
     <CurrentDateContext.Provider value={{ currentDate, setCurrentDate, changeWeek }}>
       <CurrentClienteContext.Provider value={{ cliente, role, setCliente, setRole, getToken, saveToken }}>
         <CurrentAdminOrUserContext.Provider value={{role, email, nome, id, setEmail, setNome, setRole, setId, getToken, saveToken, getUserData, Logout, updateFuncionarios }}>
-          <FuncionarioContext.Provider value={{funcionario, funcionarios, funcionariosFilter, agendamentos, setAgendamentos, setFuncionario, setFuncionarios, setFuncionariosFilter, getAgendamentosByFuncionario, getUserData, getToken}}>
+          <FuncionarioContext.Provider value={{funcionario, funcionarios, funcionariosFilter, agendamentos, setAgendamentos, setFuncionario, setFuncionarios, setFuncionariosFilter, getAgendamentosByFuncionario, getUserData, getToken, getFuncionarioById, updateFuncionario}}>
             {children}
           </FuncionarioContext.Provider>
         </CurrentAdminOrUserContext.Provider>

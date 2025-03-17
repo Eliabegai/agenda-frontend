@@ -53,10 +53,8 @@ export default function AgendaFuncionario() {
 
   const agruparAgendamentosPorHorario = (agendamentos: IAgendamento[]) => {
     const agendamentosAgrupados: { [key: string]: IAgendamento[] } = {};
-    console.log(agendamentosAgrupados)
 
     agendamentos?.forEach(agendamento => {
-      console.log('teste', agendamento)
       const dataHora = new Date(agendamento.dataHora);
       const dia = format(dataHora, 'yyyy-MM-dd');
       const hora = format(dataHora, 'HH:mm');
@@ -89,7 +87,6 @@ export default function AgendaFuncionario() {
         },
       })
       const data = await response.json()
-      console.log(data)
       setAgendamentosFiltrados(data.data)
     } catch (error) {
       console.error('Erro ao buscar os dados', error)
@@ -121,7 +118,7 @@ export default function AgendaFuncionario() {
     getAgendamentosPorDataHora(id)
     setOpen(!open)
   }
-  
+
   return (
     <div className="flex flex-col w-full p-4 rounded-xl shadow-md left-0 top-0 absolute">
       <div className="flex justify-end items-center space-x-2 px-2 sticky top-0 z-10 bg-primary-foreground">
@@ -167,7 +164,6 @@ export default function AgendaFuncionario() {
                             text-center border p-2 rounded-lg font-normal hover:bg-primary-foreground
                             ${dia.dayOfWeek === "Dom" ? "opacity-30" : "opacity-100"}
                             ${quantidadeAgendamentos.length === 1 ? "bg-blue-300 hover:bg-blue-500 dark:bg-blue-700 dark:hover:bg-blue-600" : ""}
-                            ${quantidadeAgendamentos.length > 4 ? "bg-red-300 hover:bg-red-500 dark:bg-red-700 dark:hover:bg-red-600" : ""}
                         `}
                         >
                           <div className='flex flex-row w-full justify-between items-center space-x-2'>
@@ -180,9 +176,9 @@ export default function AgendaFuncionario() {
                                   <span className='text-xl font-normal'>-------</span>
                                 ) : (
                                   <>
-                                    <span className='font-normal'>{dia.dayOfWeek === "Dom" ? "---" : <span className='text-2xl text-b'>{quantidadeAgendamentos.length ?? 0}</span>}</span>
+                                    {/* <span className='font-normal'>{dia.dayOfWeek === "Dom" ? "---" : <span className='text-2xl text-b'>{quantidadeAgendamentos.length ?? 0}</span>}</span> */}
                                     <Button
-                                      disabled={dia.dayOfWeek === "Dom" || quantidadeAgendamentos.length === 0}
+                                      disabled={dia.dayOfWeek === "Dom" || quantidadeAgendamentos.length === undefined}
                                       size={'icon'}
                                       onClick={() => handleVieweAgendamento(quantidadeAgendamentos?.[0].id)}
                                       className='bg-zinc-700 hover:bg-zinc-600 dark:bg-zinc-300 dark:hover:bg-zinc-200'

@@ -19,13 +19,13 @@ interface IHorario {
 }
 
 interface IIndisponibilidade {
-  id: string;
-  inicio: string;
-  fim: string;
+  id?: string;
+  inicio?: string;
+  fim?: string;
   dataInicio: string;
   dataFim: string;
-  motivo: string;
-  userId: string;
+  motivo?: string;
+  userId?: string;
 }
 
 interface IFuncionario {

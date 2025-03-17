@@ -9,16 +9,15 @@ import { useRouter } from 'next/navigation';
 import { useCurrentAdminOrUser } from '../hooks/PageContext';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import SettingsUser from '../EditarPerfil/Settings';
+import EmployeeEditForm from '../EditarPerfil/Settings';
 
 const Header = () => {
-  const { getToken, Logout } = useCurrentAdminOrUser()
   const router = useRouter()
-  const [token, setToken] = useState<string|null>(null)
+  const { getToken, Logout } = useCurrentAdminOrUser()
+  const [open, setOpen] = useState<boolean>(false)
+  const token = getToken()
   
-  useEffect(() => {
-    const response = getToken()
-    setToken(response)
-  },[])
   const handleLogin = () => {
     router.push('/login')
   }
@@ -36,6 +35,9 @@ const Header = () => {
           <h1 className='text-3xl font-bold'>Agenda de Trabalho</h1>
         </Link>
       </div>
+
+      <EmployeeEditForm open={open} setOpen={() => setOpen(!open)} />
+
       <div className='space-x-2'>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -45,7 +47,7 @@ const Header = () => {
           </DropdownMenuTrigger>
           <DropdownMenuContent>
             <DropdownMenuItem onClick={token ? handleLogout :handleLogin}>{token ? "Logout" : "Login"}</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => alert('Editar Perfil')}>Editar Perfil</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setOpen(!open)}>Editar Perfil</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
         <ModeToggle />

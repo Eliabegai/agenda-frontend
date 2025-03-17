@@ -104,7 +104,7 @@ const Sidebar = () => {
 const SidebarCliente = () => {
   const { currentDate, setCurrentDate} = useCurrentDate()
   const { cliente } = useCurrentCliente()
-  const { nome, role } = useCurrentAdminOrUser()
+  const {funcionario} = useFuncionarioContext()
 
   const handleDateChange = (date: Date | undefined) => {
     if(date) {
@@ -129,13 +129,13 @@ const SidebarCliente = () => {
         {/* Cliente ao entrar no site, solicitar o nome dele para colocar no campo Cliente, depois quando preecher o formulário, já deixar o nome dele lá preenchido. */}
       
       {
-        role &&
+        funcionario && funcionario.role &&
         <div className='flex flex-col justify-start w-full p-2 ml-10 mt-6 space-y-4'>
           {
-            role === 'USER' ? (
+            funcionario.role === 'USER' ? (
               <div>
                 <span>Bem vindo,</span>
-                <h2 className='text-lg font-semibold'>{nome}</h2>
+                <h2 className='text-lg font-semibold'>{funcionario.nome}</h2>
               </div>
             ) : (
               <div>
