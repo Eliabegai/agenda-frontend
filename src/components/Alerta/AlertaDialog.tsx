@@ -12,7 +12,7 @@ interface AlertaDialogProps {
     description?: string
 }
 
-const AlertaDialog = ({open, setOpen, title, children, cancel, action, description}:AlertaDialogProps) => {
+const AlertaDialogAgenda = ({open, setOpen, title, children, cancel, action, description}:AlertaDialogProps) => {
     return(
         <AlertDialog open={open} onOpenChange={setOpen}>
             <AlertDialogContent>
@@ -34,4 +34,4 @@ const AlertaDialog = ({open, setOpen, title, children, cancel, action, descripti
     )
 }
 
-export default AlertaDialog
+export default AlertaDialogAgenda

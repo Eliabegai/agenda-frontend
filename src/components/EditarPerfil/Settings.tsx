@@ -20,6 +20,7 @@ import { Button } from '../ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'
 import { Textarea } from '../ui/textarea'
 import { Calendar } from '../ui/calendar'
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogTitle } from '../ui/alert-dialog'
 
 
 interface EmployeeEditFormProps {
@@ -78,18 +79,10 @@ const formatTime = (time: string) => {
 
 const indisponibilidadeFormSchema = z
   .object({
-    dataInicio: z.date({
-      required_error: "A data de início é obrigatória.",
-    }),
-    horaInicio: z.string({
-      required_error: "A hora de início é obrigatória.",
-    }),
-    dataFim: z.date({
-      required_error: "A data de fim é obrigatória.",
-    }),
-    horaFim: z.string({
-      required_error: "A hora de fim é obrigatória.",
-    }),
+    dataInicio: z.date({required_error: "A data de início é obrigatória.",}),
+    horaInicio: z.string({required_error: "A hora de início é obrigatória.",}),
+    dataFim: z.date({required_error: "A data de fim é obrigatória.",}),
+    horaFim: z.string({required_error: "A hora de fim é obrigatória.",}),
     motivo: z.string().optional(),
   })
   .refine(
@@ -114,12 +107,13 @@ export default function EmployeeEditForm({ open, setOpen }: EmployeeEditFormProp
 
   const [editingHorario, setEditingHorario] = useState<IHorario | null>(null)
   const {funcionario, getFuncionarioById, getUserData, getToken, updateFuncionario} = useFuncionarioContext()
-  const funcionarioId = getUserData()?.id
+  const funcionarioId = getUserData()?.id || ''
   const [indisponibilidades, setIndisponibilidades] = useState<IIndisponibilidade[]>(funcionario?.indisponibilidades || [])
   const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [isCreatingHorario, setIsCreatingHorario] = useState<boolean>(false);
   const url = process.env.NEXT_PUBLIC_API_URL
   const token = getToken()
-
+  const [showMessage, setShowMessage] = useState(false)
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
@@ -197,8 +191,6 @@ export default function EmployeeEditForm({ open, setOpen }: EmployeeEditFormProp
   }
 
   async function onHorarioSubmit(data: z.infer<typeof horarioFormSchema>) {
-    
-    console.log("Dados do horário:", data)
 
     if (!token) {
       toast.error('Token não encontrado');
@@ -213,7 +205,7 @@ export default function EmployeeEditForm({ open, setOpen }: EmployeeEditFormProp
     const body = {
       "horarios": [{
         "id": data.id,
-        "diaSemana": data.diaSemana,
+        "diaSemana": Number(data.diaSemana),
         "startTime": formatTime(data.startTime),
         "endTime": formatTime(data.endTime),
         "breakStart": formatTime(data.breakStart),
@@ -235,10 +227,43 @@ export default function EmployeeEditForm({ open, setOpen }: EmployeeEditFormProp
       })
       updateFuncionario(funcionario.id)
       setEditingHorario(null)
-      // setOpen()
     } catch (error) {
       console.error('Erro ao buscar os dados', error)
       toast.error('Erro ao buscar os dados')
+    }
+  }
+
+  async function removeHorario(horarioId: string) {
+    if (!token) {
+      toast.error("Token não encontrado")
+      return
+    }
+
+    if (!funcionario) {
+      toast.error("Funcionario não encontrado")
+      return
+    }
+    
+    setShowMessage(false)
+
+
+    try {
+      await fetch(`${url}/user/horario/${horarioId}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          token: token,
+        },
+      })
+
+      toast.success("Horário removido", {
+        description: "O horário foi removido com sucesso.",
+      })
+
+      updateFuncionario(funcionario.id)
+    } catch (error) {
+      console.error("Erro ao remover horário", error)
+      toast.error("Erro ao remover horário")
     }
   }
 
@@ -293,6 +318,24 @@ export default function EmployeeEditForm({ open, setOpen }: EmployeeEditFormProp
     })
   }
 
+  const handleCreateHorario = () => {
+    setIsCreatingHorario(true);
+    setEditingHorario({
+      id: '', // ID vazio para indicar que é um novo horário
+      diaSemana: 0,
+      startTime: '09:00',
+      endTime: '18:00',
+      breakStart: '12:00',
+      breakEnd: '13:00',
+      userId: funcionarioId
+    });
+  };
+  
+  const handleCancelCreate = () => {
+    setIsCreatingHorario(false);
+    setEditingHorario(null);
+  };
+
   useEffect(() => {
     if(!funcionarioId) return
     getFuncionarioById(funcionarioId)
@@ -317,8 +360,6 @@ export default function EmployeeEditForm({ open, setOpen }: EmployeeEditFormProp
     }
   }, [editingHorario, horarioForm]);
 
-  console.log('horarioForm', horarioForm.watch())
-  console.log('editingHorario', editingHorario?.diaSemana)
   return(
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="sm:max-w-[800px] flex flex-col max-h-[90vh] overflow-auto">
@@ -470,6 +511,15 @@ export default function EmployeeEditForm({ open, setOpen }: EmployeeEditFormProp
                 <CardHeader>
                   <CardTitle>Horários de Trabalho</CardTitle>
                   <CardDescription>Visualize e edite os horários de trabalho do funcionário.</CardDescription>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-2"
+                    onClick={handleCreateHorario}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Adicionar Horário
+                  </Button>
                 </CardHeader>
                 <CardContent>
                   <Table className="table-fixed">
@@ -479,7 +529,7 @@ export default function EmployeeEditForm({ open, setOpen }: EmployeeEditFormProp
                         <TableHead className="w-1/5">Início</TableHead>
                         <TableHead className="w-1/5">Fim</TableHead>
                         <TableHead className="w-1/5">Intervalo</TableHead>
-                        <TableHead className="w-1/5">Ações</TableHead>
+                        <TableHead className="w-1/5 text-center">Ações</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -494,9 +544,31 @@ export default function EmployeeEditForm({ open, setOpen }: EmployeeEditFormProp
                               {horario.breakStart.substring(0, 5)} - {horario.breakEnd.substring(0, 5)}
                             </TableCell>
                             <TableCell>
-                              <Button variant="outline" size="sm" onClick={() => editHorario(horario)}>
-                                Editar
-                              </Button>
+                              <div className='flex justify-center items-center gap-2'>
+                                <Button variant="outline" size="sm" onClick={() => editHorario(horario)}>
+                                  Editar
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  className="text-destructive hover:bg-destructive hover:text-background"
+                                  onClick={() => setShowMessage(!showMessage)}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                                <AlertDialog open={showMessage} onOpenChange={() => setShowMessage(!showMessage)}>
+                                    <AlertDialogContent>
+                                      <AlertDialogTitle>Você tem certeza disso?</AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        Tem certeza que deseja remover este horário?
+                                      </AlertDialogDescription>
+                                      <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <Button variant={'destructive'} onClick={() => removeHorario(horario.id)}>Continue</Button>
+                                      </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                  </AlertDialog>
+                              </div>
                             </TableCell>
                           </TableRow>
                         ))}
@@ -517,11 +589,30 @@ export default function EmployeeEditForm({ open, setOpen }: EmployeeEditFormProp
                                 <FormItem>
                                   <FormLabel>Dia da Semana</FormLabel>
                                   <FormControl>
-                                    <Input 
-                                      type="hidden"
-                                      {...field}
-                                      value={field.value}
-                                    />
+                                    <div>
+                                      <Input 
+                                        type="hidden"
+                                        {...field}
+                                        value={field.value}
+                                      />
+                                      {
+                                        isCreatingHorario && (
+                                          <select
+                                            {...field}
+                                            onChange={(e) => field.onChange(Number(e.target.value))}
+                                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                          >
+                                            <option value={10}>Selecione o dia</option>
+                                            {["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado",].map((dia, index) => (
+                                              <option key={dia} value={index}>
+                                                {dia}
+                                              </option>
+                                            ))}
+                                          </select>
+                                        )
+                                      }
+
+                                    </div>
                                   </FormControl>
                                   <FormMessage />
                                 </FormItem>
@@ -588,10 +679,10 @@ export default function EmployeeEditForm({ open, setOpen }: EmployeeEditFormProp
                           </div>
 
                           <div className="flex justify-end space-x-2">
-                            <Button type="button" variant="outline" onClick={() => setEditingHorario(null)}>
+                            <Button type="button" variant="outline" onClick={handleCancelCreate}>
                               Cancelar
                             </Button>
-                            <Button type="submit">Salvar Horário</Button>
+                            <Button type="submit" variant={'outline'}>Salvar Horário</Button>
                           </div>
                         </form>
                       </Form>
