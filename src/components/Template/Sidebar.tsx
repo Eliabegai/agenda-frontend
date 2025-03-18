@@ -10,8 +10,6 @@ import { useRouter } from 'next/navigation';
 import UsersSidebar from '../Gerenciar/UsersSidebar';
 import { toast } from 'sonner';
 
-
-
 const Sidebar = () => {
 
   const {setFuncionariosFilter} = useFuncionarioContext()
@@ -141,24 +139,23 @@ const SidebarCliente = () => {
           weekStartsOn={0}
         />
       </div>
-        {/* Cliente ao entrar no site, solicitar o nome dele para colocar no campo Cliente, depois quando preecher o formulário, já deixar o nome dele lá preenchido. */}
       
       {
         funcionario && funcionario.role &&
         <div className='flex flex-col justify-start w-full p-2 ml-10 mt-6 space-y-4'>
-          {
-            funcionario.role === 'USER' ? (
-              <div>
-                <span>Bem vindo,</span>
-                <h2 className='text-lg font-semibold'>{funcionario.nome}</h2>
-              </div>
-            ) : (
-              <div>
-                <span>Bem vindo,</span>
-                <h2 className='text-lg font-semibold'>{cliente}</h2>
-              </div>
-            )
-          }
+          <div>
+            <span>Bem vindo,</span>
+            <h2 className='text-lg font-semibold'>{funcionario.nome}</h2>
+          </div>
+        </div>
+      }
+      {
+        cliente &&
+        <div className='flex flex-col justify-start w-full p-2 ml-10 mt-6 space-y-4'>
+          <div>
+            <span>Bem vindo,</span>
+            <h2 className='text-lg font-semibold'>{cliente}</h2>
+          </div>
         </div>
       }
 
