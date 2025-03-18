@@ -39,6 +39,8 @@ interface CurrentAdminOrUserProps {
   saveToken: (token: string) => void
   Logout: () => void
   updateFuncionarios: () => void
+  funcionarios: IFuncionario[]
+
 }
 
 interface FuncionarioContextProps {
@@ -76,7 +78,6 @@ export const ContextProvider = ({ children }: { children: ReactNode }) => {
   const [nome, setNomeState] = useState('')
   const [id, setIdState] = useState('')
   const url = process.env.NEXT_PUBLIC_API_URL
-
 
   useEffect(() => {
     const storadCliente = localStorage.getItem('cliente')
@@ -154,7 +155,7 @@ export const ContextProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
     
-    try{
+    try {
       const response = await fetch(`${url}/user`, {
         method: 'GET',
         headers: {
@@ -163,6 +164,17 @@ export const ContextProvider = ({ children }: { children: ReactNode }) => {
           'admin': email
         },
       })
+
+      if(!response.ok) {
+        const errorData = await response.json()
+        toast.error('Erro ao Cadastrar Reunião', {
+          description: (
+          <span>{errorData.message || errorData.error}</span>
+          )
+        })
+        throw new Error(errorData.message || errorData.error || 'Tente novamente mais tarde.')
+      }
+
       const data = await response.json()
       setFuncionarios(data.data)
     } catch (error) {
@@ -178,7 +190,7 @@ export const ContextProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
     
-    try{
+    try {
       const response = await fetch(`${url}/user/${id}`, {
         method: 'GET',
         headers: {
@@ -187,6 +199,17 @@ export const ContextProvider = ({ children }: { children: ReactNode }) => {
           'admin': email
         },
       })
+
+      if(!response.ok) {
+        const errorData = await response.json()
+        toast.error('Erro ao Cadastrar Reunião', {
+          description: (
+          <span>{errorData.message || errorData.error}</span>
+          )
+        })
+        throw new Error(errorData.message || errorData.error || 'Tente novamente mais tarde.')
+      }
+
       const data = await response.json()
       setAgendamentos(data?.data?.agendamentos)
     } catch (error) {
@@ -202,7 +225,7 @@ export const ContextProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
     
-    try{
+    try {
       const response = await fetch(`${url}/user/${id}`, {
         method: 'GET',
         headers: {
@@ -211,6 +234,17 @@ export const ContextProvider = ({ children }: { children: ReactNode }) => {
           'admin': email
         },
       })
+
+      if(!response.ok) {
+        const errorData = await response.json()
+        toast.error('Erro ao Cadastrar Reunião', {
+          description: (
+          <span>{errorData.message || errorData.error}</span>
+          )
+        })
+        throw new Error(errorData.message || errorData.error || 'Tente novamente mais tarde.')
+      }
+
       const data = await response.json()
       setFuncionario(data.data)
     } catch (error) {
@@ -226,7 +260,7 @@ export const ContextProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
     
-    try{
+    try {
       const response = await fetch(`${url}/user/${id}`, {
         method: 'GET',
         headers: {
@@ -256,7 +290,7 @@ export const ContextProvider = ({ children }: { children: ReactNode }) => {
   return (
     <CurrentDateContext.Provider value={{ currentDate, setCurrentDate, changeWeek }}>
       <CurrentClienteContext.Provider value={{ cliente, role, setCliente, setRole, getToken, saveToken }}>
-        <CurrentAdminOrUserContext.Provider value={{role, email, nome, id, setEmail, setNome, setRole, setId, getToken, saveToken, getUserData, Logout, updateFuncionarios }}>
+        <CurrentAdminOrUserContext.Provider value={{role, email, nome, id, setEmail, setNome, setRole, setId, getToken, saveToken, getUserData, Logout, updateFuncionarios, funcionarios }}>
           <FuncionarioContext.Provider value={{funcionario, funcionarios, funcionariosFilter, agendamentos, setAgendamentos, setFuncionario, setFuncionarios, setFuncionariosFilter, getAgendamentosByFuncionario, getUserData, getToken, getFuncionarioById, updateFuncionario}}>
             {children}
           </FuncionarioContext.Provider>

@@ -40,7 +40,7 @@ const Usuarios = () => {
       return;
     }
     
-    try{
+    try {
       const response = await fetch(`${url}/user/filter?nome=${nome}`, {
         method: 'GET',
         headers: {
@@ -49,6 +49,16 @@ const Usuarios = () => {
           'admin': email
         },
       })
+      if(!response.ok) {
+        const errorData = await response.json()
+        toast.error('Erro ao Cadastrar Reunião', {
+          description: (
+          <span>{errorData.message || errorData.error}</span>
+          )
+        })
+        throw new Error(errorData.message || errorData.error || 'Tente novamente mais tarde.')
+      }
+
       const data = await response.json()
       setFuncionariosFilter(data.data)
     } catch (error) {
@@ -81,8 +91,8 @@ const Usuarios = () => {
     }
     setIsLoading(!isLoading)
     
-    try{
-      await fetch(`${url}/user/${id}/indisponibilidade`, {
+    try {
+      const response = await fetch(`${url}/user/${id}/indisponibilidade`, {
         method: 'POST',
         headers: {
           "Content-Type": "application/json",
@@ -91,6 +101,15 @@ const Usuarios = () => {
         },
         body: JSON.stringify(body)
       })
+      if(!response.ok) {
+        const errorData = await response.json()
+        toast.error('Erro ao Cadastrar Reunião', {
+          description: (
+          <span>{errorData.message || errorData.error}</span>
+          )
+        })
+        throw new Error(errorData.message || errorData.error || 'Tente novamente mais tarde.')
+      }
       toast.success('Indisponibilidade Cadastrada!')
       setIsLoading(false)
       setOpenIndisponivel(false)
@@ -108,8 +127,8 @@ const Usuarios = () => {
       return;
     }
     
-    try{
-      await fetch(`${url}/user/${id}`, {
+    try {
+      const response = await fetch(`${url}/user/${id}`, {
         method: 'PATCH',
         headers: {
           "Content-Type": "application/json",
@@ -118,6 +137,16 @@ const Usuarios = () => {
         },
         body: JSON.stringify(body)
       })
+      if(!response.ok) {
+        const errorData = await response.json()
+        toast.error('Erro ao Cadastrar Reunião', {
+          description: (
+          <span>{errorData.message || errorData.error}</span>
+          )
+        })
+        throw new Error(errorData.message || errorData.error || 'Tente novamente mais tarde.')
+      }
+
       toast.success('Usuário Atualizado com Sucesso!')
       setOpenEdit(false)
       setIsLoading(false)
@@ -134,8 +163,8 @@ const Usuarios = () => {
       return;
     }
     
-    try{
-      await fetch(`${url}/user/${id}`, {
+    try {
+      const response = await fetch(`${url}/user/${id}`, {
         method: 'DELETE',
         headers: {
           "Content-Type": "application/json",
@@ -143,6 +172,17 @@ const Usuarios = () => {
           'admin': email
         }
       })
+
+      if(!response.ok) {
+        const errorData = await response.json()
+        toast.error('Erro ao Cadastrar Reunião', {
+          description: (
+          <span>{errorData.message || errorData.error}</span>
+          )
+        })
+        throw new Error(errorData.message || errorData.error || 'Tente novamente mais tarde.')
+      }
+
       toast.success('Usuário Removido com Sucesso!')
       setOpenRemove(false)
       updateFuncionarios()
@@ -163,7 +203,7 @@ const Usuarios = () => {
       return;
     }
 
-    try{
+    try {
       const response = await fetch(`${url}/user/${id}`, {
         method: 'GET',
         headers: {
@@ -172,6 +212,17 @@ const Usuarios = () => {
           'admin': email
         },
       })
+
+      if(!response.ok) {
+        const errorData = await response.json()
+        toast.error('Erro ao Cadastrar Reunião', {
+          description: (
+          <span>{errorData.message || errorData.error}</span>
+          )
+        })
+        throw new Error(errorData.message || errorData.error || 'Tente novamente mais tarde.')
+      }
+
       const data = await response.json()
       setOpenEdit(!openEdit)
       setFuncionario(data.data)
@@ -189,7 +240,7 @@ const Usuarios = () => {
       return;
     }
 
-    try{
+    try {
       const response = await fetch(`${url}/user/${id}`, {
         method: 'GET',
         headers: {
@@ -198,6 +249,16 @@ const Usuarios = () => {
           'admin': email
         },
       })
+      if(!response.ok) {
+        const errorData = await response.json()
+        toast.error('Erro ao Cadastrar Reunião', {
+          description: (
+          <span>{errorData.message || errorData.error}</span>
+          )
+        })
+        throw new Error(errorData.message || errorData.error || 'Tente novamente mais tarde.')
+      }
+      
       const data = await response.json()
       setFuncionario(data.data)
     } catch (error) {
@@ -214,8 +275,8 @@ const Usuarios = () => {
       return;
     }
     
-    try{
-      await fetch(`${url}/auth/register`, {
+    try {
+      const response = await fetch(`${url}/auth/register`, {
         method: 'POST',
         headers: {
           "Content-Type": "application/json",
@@ -224,6 +285,17 @@ const Usuarios = () => {
         },
         body:JSON.stringify(body)
       })
+      
+      if(!response.ok) {
+        const errorData = await response.json()
+        toast.error('Erro ao Cadastrar Reunião', {
+          description: (
+          <span>{errorData.message || errorData.error}</span>
+          )
+        })
+        throw new Error(errorData.message || errorData.error || 'Tente novamente mais tarde.')
+      }
+
       toast.success('Usuário Criado com Sucesso!')
       setIsLoading(false)
       setOpenCreate(false)

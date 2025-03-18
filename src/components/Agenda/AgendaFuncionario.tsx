@@ -2,17 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Eye, Pencil } from "lucide-react";
-import { format, addDays, startOfWeek, addHours } from "date-fns";
+import { ChevronLeft, ChevronRight, Eye } from "lucide-react";
+import { format, startOfWeek } from "date-fns";
 import { ptBR } from "date-fns/locale/pt-BR";
 import { useCurrentDate, useFuncionarioContext } from '../hooks/PageContext';
-import VisualizarAgenda from './VisualizaraAgenda';
-import { Modal } from '../Dialog/Modal';
 import { toast } from 'sonner';
 import { gerarHorarios, returnNextSevenDays } from '@/utils/gerarHorarios';
 import ModalAgenda from './ModalAgenda';
-
-const daysOfWeek = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"];
 
 interface DateInfo {
   dayOfWeek: string;
@@ -33,7 +29,6 @@ export default function AgendaFuncionario() {
   const [mesAtual, setMesAtual] = useState('')
   const [horarios, setHorarios] = useState<string[]>([])
   const [open, setOpen] = useState(false)
-  const [horaAgendamento, setHoraAgendamento] = useState<string[]>([])
   const [agendamentosPorHorario, setAgendamentosPorHorario] = useState<{ [key: string]: IAgendamento[] }>({});
   const [agendamentosFiltrados, setAgendamentosFiltrados] = useState<IAgendamento | null>(null);
 
@@ -42,7 +37,7 @@ export default function AgendaFuncionario() {
 
   const getAgendamentos = async () => {
     if(!idFuncionario) return
-    try{
+    try {
       getAgendamentosByFuncionario(idFuncionario)
       toast.success('Agenda atualizada')
     } catch (error) {
@@ -77,7 +72,7 @@ export default function AgendaFuncionario() {
     }
     if(!email) return
 
-    try{
+    try {
       const response = await fetch(`${url}/agendamento/${id}`, {
         method: 'GET',
         headers: {
@@ -86,6 +81,17 @@ export default function AgendaFuncionario() {
           'admin': email
         },
       })
+
+      if(!response.ok) {
+        const errorData = await response.json()
+        toast.error('Erro ao Cadastrar Reunião', {
+          description: (
+          <span>{errorData.message || errorData.error}</span>
+          )
+        })
+        throw new Error(errorData.message || errorData.error || 'Tente novamente mais tarde.')
+      }
+      
       const data = await response.json()
       setAgendamentosFiltrados(data.data)
     } catch (error) {

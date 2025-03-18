@@ -23,7 +23,7 @@ const UsersSidebar = ({email, token }:UsersSidebarProps) => {
       return;
     }
 
-    try{
+    try {
       const response = await fetch(`${url}/user/${id}`, {
         method: 'GET',
         headers: {
@@ -32,6 +32,17 @@ const UsersSidebar = ({email, token }:UsersSidebarProps) => {
           'admin': email
         },
       })
+
+      if(!response.ok) {
+        const errorData = await response.json()
+        toast.error('Erro ao Cadastrar Reunião', {
+          description: (
+          <span>{errorData.message || errorData.error}</span>
+          )
+        })
+        throw new Error(errorData.message || errorData.error || 'Tente novamente mais tarde.')
+      }
+
       const data = await response.json()
       setOpenEdit(!openEdit)
       setFuncionario(data.data)

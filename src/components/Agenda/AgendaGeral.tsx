@@ -22,7 +22,7 @@ interface DateInfo {
 
 export default function AgendaGeral() {
   const { currentDate, changeWeek} = useCurrentDate()
-  const { email, getToken } = useCurrentAdminOrUser()
+  const { email, getToken, funcionarios } = useCurrentAdminOrUser()
   const [dates, setDates] = useState<DateInfo[]>([])
   const [mesAtual, setMesAtual] = useState('')
   const [horarios, setHorarios] = useState<string[]>([])
@@ -30,6 +30,7 @@ export default function AgendaGeral() {
   const [agendamentosPorHorario, setAgendamentosPorHorario] = useState<{ [key: string]: number }>({});
   const [openForm, setOpenForm] = useState(false)
   const [agendamentosFiltrados, setAgendamentosFiltrados] = useState<IAgendamento[]>([]);
+  const [countFuncionarios, setCountFuncionarios] = useState(10)
 
   const url = process.env.NEXT_PUBLIC_API_URL
   const token = getToken()
@@ -39,11 +40,15 @@ export default function AgendaGeral() {
       toast.error('Token não encontrado');
       return;
     }
+    
+    if(!dates.length) {
+      return;
+    }
 
-    const startDate = `${dates?.[0]?.fullDate}T10:00:00Z`
-    const endDate = `${dates?.[6]?.fullDate}T10:00:00Z`
+    const startDate = `${dates?.[0]?.fullDate}T00:00:00Z`
+    const endDate = `${dates?.[6]?.fullDate}T23:00:00Z`
 
-    try{
+    try {
       const response = await fetch(`${url}/agendamento/filter?start=${startDate}&end=${endDate}`, {
         method: 'GET',
         headers: {
@@ -52,6 +57,15 @@ export default function AgendaGeral() {
           'admin': email
         },
       })
+      if(!response.ok) {
+        const errorData = await response.json()
+        toast.error('Erro ao Cadastrar Reunião', {
+          description: (
+            <span>{errorData.message || errorData.error}</span>
+          )
+        })
+        throw new Error(errorData.message || errorData.error || 'Erro ao realizar o agendamento. Tente novamente mais tarde.')
+      }
       const data = await response.json()
       setAgendamentos(data.data)
       toast.success('Agenda atualizada')
@@ -70,7 +84,7 @@ export default function AgendaGeral() {
 
     const startDate = addHours(format(new Date(dataHora), "yyyy-MM-dd'T'HH:mm:ss'Z'", { locale: ptBR }), 3)
     const endDate = startDate
-    try{
+    try {
       const response = await fetch(`${url}/agendamento/filter?start=${startDate}&end=${endDate}`, {
         method: 'GET',
         headers: {
@@ -117,13 +131,16 @@ export default function AgendaGeral() {
     const horarios = gerarHorarios("07:00", "20:00", 30)
     setHorarios(horarios)
     
-    getAgendamentos()
-
   },[currentDate])
 
   useEffect(() => {
     agruparAgendamentosPorHorario(agendamentos);
   }, [agendamentos]);
+
+  useEffect(() => {
+    getAgendamentos()
+    setCountFuncionarios(funcionarios.length || 10)
+  }, [dates]);
 
   const handleVieweAgendamento = (hora: string, quantidadeAgendamentos: number, dataHora: string) => {
     toast.info(`${quantidadeAgendamentos} - ${hora}`)
@@ -164,7 +181,7 @@ export default function AgendaGeral() {
           <tbody>
               { horarios.map((hora, i) => (
                 <tr key={i}>
-                  {
+                  { dates &&
                     dates.map((dia, j) => {
                       const chave = `${dia.fullDate} ${hora}`
                       const quantidadeAgendamentos = agendamentosPorHorario[chave] || 0
@@ -175,8 +192,8 @@ export default function AgendaGeral() {
                           className={`
                             text-center border p-2 rounded-lg font-normal hover:bg-primary-foreground
                             ${dia.dayOfWeek === "Dom" ? " bg-zinc-200 opacity-30" : "opacity-100"}
-                            ${quantidadeAgendamentos >= 1 ? "bg-blue-300 hover:bg-blue-500 dark:bg-blue-700 dark:hover:bg-blue-600" : ""}
-                            ${quantidadeAgendamentos >= 4 ? "bg-red-300 hover:bg-red-500 dark:bg-red-700 dark:hover:bg-red-600" : ""}
+                            ${quantidadeAgendamentos > 0 ? "bg-blue-300 hover:bg-blue-500 dark:bg-blue-700 dark:hover:bg-blue-600" : ""}
+                            ${dates && quantidadeAgendamentos === countFuncionarios ? "bg-red-300 hover:bg-red-500 dark:bg-red-700 dark:hover:bg-red-600" : ""}
                         `}
                         >
                           <div className='flex flex-row w-full justify-between items-center space-x-2'>

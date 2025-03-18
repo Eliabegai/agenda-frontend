@@ -10,33 +10,35 @@ import { getDate, getHours, getMinutes, getMonth, getYear, parseISO } from 'date
 import { UseFormReturn } from 'react-hook-form'
 import { FormSchema } from './AgendaCliente'
 import { Button } from '../ui/button'
+import { Loader2 } from 'lucide-react'
 
 interface FormularioAgendaProps {
   form: UseFormReturn<z.infer<typeof FormSchema>>
-  date: string
-  horario: string
+  date: Date | null
   onSubmit: (data: z.infer<typeof FormSchema>) => void
   cancel?: () => void
+  loading: boolean
+  horaAgendamento: string
 }
 
-const FormularioAgenda = ({form, date,horario, onSubmit, cancel}: FormularioAgendaProps) => {
+const FormularioAgenda = ({form, date, loading, horaAgendamento, onSubmit, cancel}: FormularioAgendaProps) => {
   const { cliente } = useCurrentCliente()
-
-  const isoDate = date;
-  const date1 = parseISO(isoDate);
-  const month = getMonth(date1) + 1; // getMonth retorna 0-11, então adicionamos 1
-  const day = getDate(date1);
-  const hours = getHours(date1);
-  const minutes = getMinutes(date1);
+  
+  if(!date) return
+  
+  const isoDate = new Date(horaAgendamento);
+  const month = getMonth(isoDate) + 1; // getMonth retorna 0-11, então adicionamos 1
+  const day = getDate(isoDate);
+  const hours = getHours(isoDate);
+  const minutes = getMinutes(isoDate);
   
   useEffect(() => {
       if(cliente) {
-          form.setValue('nome', cliente)
+          form.setValue('Cliente.nome', cliente)
       }
       // form.setValue('email', "eliabe.gai@email.com")
       // form.setValue('telefone', "47992082307")
-      form.setValue('data', date)
-      form.setValue('horario', horario)
+      form.setValue('dataHora', isoDate)
       // form.setValue('protocolo', "516165168")
   },[])
 
@@ -50,7 +52,7 @@ const FormularioAgenda = ({form, date,horario, onSubmit, cancel}: FormularioAgen
           <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-8 w-full'>
             <FormField
               control={form.control} 
-              name="nome"
+              name="Cliente.nome"
               render={({field}) => (
                 <FormItem>
                   <FormControl>
@@ -65,7 +67,7 @@ const FormularioAgenda = ({form, date,horario, onSubmit, cancel}: FormularioAgen
             />
             <FormField
               control={form.control} 
-              name="email"
+              name="Cliente.email"
               render={({field}) => (
                 <FormItem>
                   <FormControl>
@@ -80,7 +82,7 @@ const FormularioAgenda = ({form, date,horario, onSubmit, cancel}: FormularioAgen
             />
             <FormField
               control={form.control} 
-              name="telefone"
+              name="Cliente.telefone"
               render={({field}) => (
                 <FormItem>
                   <FormControl>
@@ -103,7 +105,7 @@ const FormularioAgenda = ({form, date,horario, onSubmit, cancel}: FormularioAgen
             />
             <FormField
               control={form.control} 
-              name="protocolo"
+              name="Cliente.protocolo"
               render={({field}) => (
                 <FormItem>
                   <FormControl>
@@ -117,20 +119,11 @@ const FormularioAgenda = ({form, date,horario, onSubmit, cancel}: FormularioAgen
               )}
             />
             <div className='flex w-full justify-center items-center space-x-4'>
-              <Button 
-                variant={'default'}
-                type='submit'
-                size={'lg'}
-                className='bg-[var(--background-azul)] hover:bg-[(var(--background-hover-azul)] w-36'
-              >
+              <Button variant={'outline'} disabled={loading} type='submit' size={'lg'} className='bg-[var(--background-azul)] hover:bg-[(var(--background-hover-azul)] w-36' >
+                {loading && <Loader2 className='animate-spin' />}
                 Agendar
               </Button>
-              <Button 
-                variant={'outline'}
-                size={'lg'}
-                className='w-36'
-                onClick={cancel}
-              >
+              <Button type='button' variant={'outline'} size={'lg'} className='w-36' onClick={cancel} >
                 Cancel
               </Button>
             </div>

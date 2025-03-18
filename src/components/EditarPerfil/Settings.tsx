@@ -20,7 +20,7 @@ import { Button } from '../ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'
 import { Textarea } from '../ui/textarea'
 import { Calendar } from '../ui/calendar'
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogTitle } from '../ui/alert-dialog'
+import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogTitle } from '../ui/alert-dialog'
 import { SkeletonIndisponibilidadeItem } from '../Skeletons/SkeletonIndisponibilidade'
 
 
@@ -155,7 +155,6 @@ export default function EmployeeEditForm({ open, setOpen }: EmployeeEditFormProp
   })
 
   async function onProfileSubmit(data: z.infer<typeof profileFormSchema>) {
-    console.log("Dados do perfil:", data)
 
     if (!token) {
       toast.error('Token não encontrado');
@@ -173,8 +172,8 @@ export default function EmployeeEditForm({ open, setOpen }: EmployeeEditFormProp
       "nome": data.nome
     }
 
-    try{
-      await fetch(`${url}/user/${funcionario.id}`, {
+    try {
+      const response = await fetch(`${url}/user/${funcionario.id}`, {
         method: 'PATCH',
         headers: {
           "Content-Type": "application/json",
@@ -182,6 +181,16 @@ export default function EmployeeEditForm({ open, setOpen }: EmployeeEditFormProp
         },
         body: JSON.stringify(body)
       })
+
+      if(!response.ok) {
+        const errorData = await response.json()
+        toast.error('Erro ao Cadastrar Reunião', {
+          description: (
+          <span>{errorData.message || errorData.error}</span>
+          )
+        })
+        throw new Error(errorData.message || errorData.error || 'Tente novamente mais tarde.')
+      }
       toast.success("Perfil atualizado",{
         description: "As informações do perfil foram atualizadas com sucesso.",
       })
@@ -216,8 +225,8 @@ export default function EmployeeEditForm({ open, setOpen }: EmployeeEditFormProp
       }]
     }
 
-    try{
-      await fetch(`${url}/user/${funcionario.id}`, {
+    try {
+      const response = await fetch(`${url}/user/${funcionario.id}`, {
         method: 'PATCH',
         headers: {
           "Content-Type": "application/json",
@@ -225,6 +234,17 @@ export default function EmployeeEditForm({ open, setOpen }: EmployeeEditFormProp
         },
         body: JSON.stringify(body)
       })
+
+      if(!response.ok) {
+        const errorData = await response.json()
+        toast.error('Erro ao Cadastrar Reunião', {
+          description: (
+          <span>{errorData.message || errorData.error}</span>
+          )
+        })
+        throw new Error(errorData.message || errorData.error || 'Tente novamente mais tarde.')
+      }
+
       toast.success("Horário atualizado",{
         description: "O horário foi atualizado com sucesso.",
       })
@@ -251,13 +271,23 @@ export default function EmployeeEditForm({ open, setOpen }: EmployeeEditFormProp
 
 
     try {
-      await fetch(`${url}/user/horario/${horarioId}`, {
+      const response = await fetch(`${url}/user/horario/${horarioId}`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
           token: token,
         },
       })
+
+      if(!response.ok) {
+        const errorData = await response.json()
+        toast.error('Erro ao Cadastrar Reunião', {
+          description: (
+          <span>{errorData.message || errorData.error}</span>
+          )
+        })
+        throw new Error(errorData.message || errorData.error || 'Tente novamente mais tarde.')
+      }
 
       toast.success("Horário removido", {
         description: "O horário foi removido com sucesso.",
@@ -297,8 +327,8 @@ export default function EmployeeEditForm({ open, setOpen }: EmployeeEditFormProp
       motivo: data.motivo,
     }
 
-    try{
-      await fetch(`${url}/user/${funcionario.id}/indisponibilidade`, {
+    try {
+      const response = await fetch(`${url}/user/${funcionario.id}/indisponibilidade`, {
         method: 'POST',
         headers: {
           "Content-Type": "application/json",
@@ -306,14 +336,24 @@ export default function EmployeeEditForm({ open, setOpen }: EmployeeEditFormProp
         },
         body: JSON.stringify(novaIndisponibilidade)
       })
+
+      if(!response.ok) {
+        const errorData = await response.json()
+        toast.error('Erro ao Cadastrar Reunião', {
+          description: (
+          <span>{errorData.message || errorData.error}</span>
+          )
+        })
+        throw new Error(errorData.message || errorData.error || 'Tente novamente mais tarde.')
+      }
+
+      toast.success("Indisponibilidade registrada",{
+        description: "O período de indisponibilidade foi registrado com sucesso.",
+      })
     } catch (error) {
       console.error('Erro ao buscar os dados', error)
       toast.error('Erro ao buscar os dados')
     } finally {
-      toast.success("Indisponibilidade registrada",{
-        description: "O período de indisponibilidade foi registrado com sucesso.",
-      })
-      
       updateFuncionario(funcionario.id)
       setLoading(false)
 
@@ -351,22 +391,34 @@ export default function EmployeeEditForm({ open, setOpen }: EmployeeEditFormProp
       return;
     }
 
-    try{
-      await fetch(`${url}/user/${funcionario.id}/indisponibilidade/${id}`, {
+    try {
+      const response = await fetch(`${url}/user/${funcionario.id}/indisponibilidade/${id}`, {
         method: 'DELETE',
         headers: {
           "Content-Type": "application/json",
           'token': token,
         },
       })
-    } catch (error) {
-      console.error('Erro ao buscar os dados', error)
-      toast.error('Erro ao buscar os dados')
-    } finally {
+
+      if(!response.ok) {
+        const errorData = await response.json()
+        toast.error('Erro ao Cadastrar Reunião', {
+          description: (
+          <span>{errorData.message || errorData.error}</span>
+          )
+        })
+        throw new Error(errorData.message || errorData.error || 'Tente novamente mais tarde.')
+      }
+
       toast.success("Indisponibilidade removida",{
         description: "O período de indisponibilidade foi removido com sucesso.",
       })
       
+
+    } catch (error) {
+      console.error('Erro ao buscar os dados', error)
+      toast.error('Erro ao buscar os dados')
+    } finally {
       updateFuncionario(funcionario.id)
       setShowMessageIndisponivel(false)
       setLoading(false)
@@ -427,7 +479,6 @@ export default function EmployeeEditForm({ open, setOpen }: EmployeeEditFormProp
     }
   }, [editingHorario, horarioForm]);
 
-  console.log(indisponibilidades)
   return(
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="sm:max-w-[800px] flex flex-col max-h-[90vh] overflow-auto">

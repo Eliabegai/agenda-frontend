@@ -7,9 +7,8 @@ import { Button } from '../ui/button';
 import { ModeToggle } from '../ModeToggle/modeToggler';
 import { useRouter } from 'next/navigation';
 import { useCurrentAdminOrUser } from '../hooks/PageContext';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
-import SettingsUser from '../EditarPerfil/Settings';
 import EmployeeEditForm from '../EditarPerfil/Settings';
 
 const Header = () => {
@@ -46,8 +45,10 @@ const Header = () => {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
-            <DropdownMenuItem onClick={token ? handleLogout :handleLogin}>{token ? "Logout" : "Login"}</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setOpen(!open)}>Editar Perfil</DropdownMenuItem>
+            <DropdownMenuItem onClick={token ? handleLogout : handleLogin}>{token ? "Logout" : "Login"}</DropdownMenuItem>
+            {token &&
+              <DropdownMenuItem onClick={() => setOpen(!open)}>Editar Perfil</DropdownMenuItem>
+            }
           </DropdownMenuContent>
         </DropdownMenu>
         <ModeToggle />

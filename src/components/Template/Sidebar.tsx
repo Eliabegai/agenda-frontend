@@ -1,5 +1,5 @@
 'use client'
-import { KeyboardEvent, useState } from 'react';
+import { KeyboardEvent, useEffect, useState } from 'react';
 import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons';
 import { Calendar } from '../ui/calendar';
 import { Button } from '../ui/button';
@@ -35,7 +35,7 @@ const Sidebar = () => {
     if(nome === "") {
       setFuncionariosFilter([])
     } else {
-      try{
+      try {
         const response = await fetch(`${url}/user/filter?nome=${nome}`, {
           method: 'GET',
           headers: {
@@ -44,6 +44,17 @@ const Sidebar = () => {
             'admin': email
           },
         })
+
+        if(!response.ok) {
+          const errorData = await response.json()
+          toast.error('Erro ao Cadastrar Reunião', {
+            description: (
+            <span>{errorData.message || errorData.error}</span>
+            )
+          })
+          throw new Error(errorData.message || errorData.error || 'Tente novamente mais tarde.')
+        }
+
         const data = await response.json()
         setFuncionariosFilter(data.data)
       } catch (error) {
@@ -111,6 +122,10 @@ const SidebarCliente = () => {
       setCurrentDate(date)
     }
   }
+
+  useEffect(() => {
+
+  },[cliente])
 
   return(
     <aside className="flex flex-col fixed top-20 left-0 w-72 h-full border-r border-[var(--background-azul)] p-2 items-center text-sm gap-3 overflow-auto">
