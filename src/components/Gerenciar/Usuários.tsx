@@ -12,6 +12,7 @@ import { Modal } from '../Dialog/Modal'
 import FormUser from './FormUser'
 import FormEditUser from './FormEditUser'
 import FormIndisponivelUser from './FormIndisponivelUser'
+import FuncionarioModal from './FuncionarioModal'
 
 
 const Usuarios = () => {
@@ -327,13 +328,15 @@ const Usuarios = () => {
         </Button>
       </div>
 
+      <FuncionarioModal open={openEdit} setOpen={() => setOpenEdit(!openEdit)} funcionario={funcionario} />
+
       <Modal open={openCreate} openChange={() => setOpenCreate(!openCreate)} closeFooter>
         <FormUser onSubmit={onSubmitUser} cancel={() => setOpenCreate(!openCreate)} />
       </Modal>
 
-      <Modal open={openEdit} openChange={() => setOpenEdit(!openEdit)} closeFooter>
+      {/* <Modal open={openEdit} openChange={() => setOpenEdit(!openEdit)} closeFooter>
         <FormEditUser onSubmit={submitEditUser} cancel={() => setOpenEdit(!openEdit)} userData={funcionario} />
-      </Modal>
+      </Modal> */}
       
       <Modal open={openIndisponivel} openChange={() => setOpenIndisponivel(!openIndisponivel)} closeFooter>
         <FormIndisponivelUser 

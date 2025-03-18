@@ -22,13 +22,13 @@ const getDiaSemana = (dia: number): string => {
   return diasSemana[dia] || ""
 }
 
-interface EmployeeModalProps {
+interface FuncionarioModalProps {
   funcionario: IFuncionario | null
   open: boolean
   setOpen: () => void
 }
 
-export default function EmployeeModal({funcionario, open, setOpen}: EmployeeModalProps) {
+export default function FuncionarioModal({funcionario, open, setOpen}: FuncionarioModalProps) {
 
   if(funcionario === null) return
 
@@ -99,7 +99,7 @@ export default function EmployeeModal({funcionario, open, setOpen}: EmployeeModa
             </Card>
           </TabsContent>
 
-          <TabsContent value="agendamentos" className='h-96 overflow-auto'>
+          <TabsContent value="agendamentos" className='max-h-96 overflow-auto'>
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">

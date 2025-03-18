@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { Button } from '../ui/button'
 import { useCurrentAdminOrUser, useFuncionarioContext } from '../hooks/PageContext'
-import EmployeeModal from './FuncionarioModal'
+import FuncionarioModal from './FuncionarioModal'
 
 interface UsersSidebarProps {
   email: string
@@ -61,7 +61,7 @@ const UsersSidebar = ({email, token }:UsersSidebarProps) => {
   return(
     <div className="flex flex-col w-full max-h-40 gap-1 border rounded-md p-2 mb-2 overflow-auto">
 
-      <EmployeeModal open={openEdit} setOpen={() => setOpenEdit(!openEdit)} funcionario={funcionario} />
+      <FuncionarioModal open={openEdit} setOpen={() => setOpenEdit(!openEdit)} funcionario={funcionario} />
 
       <ul className="border-r border-gray-400">
         { funcionariosFilter?.length === 0 ? (

@@ -193,7 +193,6 @@ const FormIndisponivelUser = ({ onSubmit, cancel, id }:FormIndisponivelUserProps
                   )}
                   />
               </div>
-
             <div className='flex flex-col mt-2'>
               <div className='flex w-full mt-4 justify-evenly items-center'>
                 <Button variant={'outline'} type='submit' className='bg-[var(--background-azul)] hover:bg-[var(--background-hover-azul)]'>Cadastrar</Button>
