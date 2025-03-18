@@ -40,7 +40,8 @@ interface CurrentAdminOrUserProps {
   Logout: () => void
   updateFuncionarios: () => void
   funcionarios: IFuncionario[]
-
+  loadingFuncionario: boolean
+  setLoadingFuncionario: (state: boolean) => void
 }
 
 interface FuncionarioContextProps {
@@ -77,6 +78,7 @@ export const ContextProvider = ({ children }: { children: ReactNode }) => {
   const [email, setEmailState] = useState('')
   const [nome, setNomeState] = useState('')
   const [id, setIdState] = useState('')
+  const [loadingFuncionario, setLoadingFuncionario] = useState<boolean>(false)
   const url = process.env.NEXT_PUBLIC_API_URL
 
   useEffect(() => {
@@ -149,6 +151,7 @@ export const ContextProvider = ({ children }: { children: ReactNode }) => {
   }
 
   const updateFuncionarios = async () => {
+    setLoadingFuncionario(true)
     const token = getToken()
     if (!token) {
       toast.error('Token não encontrado');
@@ -180,6 +183,8 @@ export const ContextProvider = ({ children }: { children: ReactNode }) => {
     } catch (error) {
       console.error('Erro ao buscar os dados', error)
       toast.error('Erro ao buscar os dados')
+    } finally {
+      setLoadingFuncionario(false)
     }
   }
 
@@ -290,7 +295,7 @@ export const ContextProvider = ({ children }: { children: ReactNode }) => {
   return (
     <CurrentDateContext.Provider value={{ currentDate, setCurrentDate, changeWeek }}>
       <CurrentClienteContext.Provider value={{ cliente, role, setCliente, setRole, getToken, saveToken }}>
-        <CurrentAdminOrUserContext.Provider value={{role, email, nome, id, setEmail, setNome, setRole, setId, getToken, saveToken, getUserData, Logout, updateFuncionarios, funcionarios }}>
+        <CurrentAdminOrUserContext.Provider value={{loadingFuncionario, role, email, nome, id, setEmail, setNome, setRole, setId, getToken, saveToken, getUserData, Logout, updateFuncionarios, setLoadingFuncionario, funcionarios }}>
           <FuncionarioContext.Provider value={{funcionario, funcionarios, funcionariosFilter, agendamentos, setAgendamentos, setFuncionario, setFuncionarios, setFuncionariosFilter, getAgendamentosByFuncionario, getUserData, getToken, getFuncionarioById, updateFuncionario}}>
             {children}
           </FuncionarioContext.Provider>

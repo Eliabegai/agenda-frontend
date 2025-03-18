@@ -96,7 +96,7 @@ export default function FormUser({ onSubmit, cancel, loading }: FormUserProps) {
   const diasSemana = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sab"]
 
   return (
-    <Card className="w-full max-w-3xl mx-auto">
+    <Card className="w-full max-w-2xl max-h-[650px] mx-auto">
       <CardHeader>
         <CardTitle className="text-2xl font-bold text-center">Novo Funcionário</CardTitle>
         <Separator className="h-1 bg-primary rounded-lg" />
@@ -148,7 +148,7 @@ export default function FormUser({ onSubmit, cancel, loading }: FormUserProps) {
 
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-medium">Selecione os dias da semana que irá trabalhar</h3>
+                <h3 className="text-sm font-medium">Selecione os dias da semana que irá trabalhar</h3>
                 <div className="flex items-center gap-2">
                   <Label htmlFor="repeat-horarios" className="text-sm">
                     Repetir horários
@@ -157,7 +157,7 @@ export default function FormUser({ onSubmit, cancel, loading }: FormUserProps) {
                 </div>
               </div>
 
-              <div className="border rounded-md p-4 max-h-64 overflow-auto">
+              <div className="border rounded-md p-4 max-h-52 overflow-auto">
                 <div className="grid grid-cols-[auto_1fr] gap-4">
                   {form.watch("horarios")?.map((_, index) => (
                     <div key={index} className="contents">

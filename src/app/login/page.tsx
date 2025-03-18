@@ -32,6 +32,8 @@ interface ILogin {
 export default function Agenda() {
 
   const router = useRouter()
+  const url = process.env.NEXT_PUBLIC_API_URL
+
   const { setEmail, setNome, setRole, setId, getToken, saveToken, getUserData } = useCurrentAdminOrUser()
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
@@ -63,7 +65,7 @@ export default function Agenda() {
   }
 
   const login = async (body: any) => {
-    const response = await fetch('http://localhost:3000/auth/login', { 
+    const response = await fetch(`${url}/auth/login`, { 
       method: "POST",
       headers: {
         "Content-Type": "application/json",
