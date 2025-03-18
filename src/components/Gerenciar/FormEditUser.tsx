@@ -290,9 +290,9 @@ const FormEditUser = ({ onSubmit, cancel, userData }:FormUserProps) => {
                 ))}
               </div>
 
-              <div className='flex w-full mt-4 justify-evenly items-center'>
-                <Button variant={'outline'} className='bg-[var(--background-azul)] hover:bg-[var(--background-hover-azul)]' type='submit'>Salvar</Button>
-                <Button variant={'outline'} type='button' onClick={cancel}>Cancelar</Button>
+              <div className='flex w-full mt-4 justify-evenly items-center gap-3'>
+                <Button variant={'outline'} className='w-1/2 bg-[var(--background-azul)] hover:bg-[var(--background-hover-azul)]' type='submit'>Salvar</Button>
+                <Button variant={'outline'} type='button' className='w-1/2' onClick={cancel}>Cancelar</Button>
               </div>
             </div>
           </div>
