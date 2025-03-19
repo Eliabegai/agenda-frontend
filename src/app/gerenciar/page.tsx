@@ -1,6 +1,6 @@
+'use client'
 import Usuarios from '@/components/Gerenciar/Usuários'
 import Pagina from '@/components/Template/Pagina'
-
 
 const GerenciarFuncionario = () => {
 
