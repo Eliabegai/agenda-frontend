@@ -37,3 +37,6 @@ interface IFuncionario {
   indisponibilidades: IIndisponibilidade[];
   horarios: IHorario[];
 }
+interface ILogin {
+  access_token: string
+}

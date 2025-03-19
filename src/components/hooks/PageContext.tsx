@@ -40,6 +40,7 @@ interface CurrentAdminOrUserProps {
   getUserData: () => UserDataProps | null
   saveToken: (token: string) => void
   Logout: () => void
+  Login: (body:{email:string, senha:string}) => Promise<ILogin | null>
   updateFuncionarios: () => void
   setLoadingFuncionario: (state: boolean) => void
 }
@@ -146,6 +147,35 @@ export const ContextProvider = ({ children }: { children: ReactNode }) => {
     setRoleState(role)
   }
 
+  const Login = async (body: {email:string, senha:string}): Promise<ILogin | null> => {
+    try {
+      const response = await fetch(`${url}/auth/login`, {
+        method: 'POST',
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(body)
+      })
+
+      if(!response.ok) {
+        const errorData = await response.json()
+        toast.error('Erro ao Cadastrar Reunião', {
+          description: (
+          <span>{errorData.message || errorData.error}</span>
+          )
+        })
+        throw new Error(errorData.message || errorData.error || 'Tente novamente mais tarde.')
+      }
+
+      const data = await response.json();
+      return { access_token: data.access_token };
+
+    } catch (error) {
+      console.error('Erro ao buscar os dados', error)
+      return null
+    }
+  }
+
   const Logout = async () => {
  
     const token = getToken()
@@ -172,6 +202,14 @@ export const ContextProvider = ({ children }: { children: ReactNode }) => {
         })
         throw new Error(errorData.message || errorData.error || 'Tente novamente mais tarde.')
       }
+
+      toast.success("Saíndo", {
+        description: (
+          <div>
+            <h3>Volte Sempre!</h3>
+          </div>
+        )
+      })
 
       sessionStorage.clear()
       localStorage.removeItem('user')
@@ -328,7 +366,7 @@ export const ContextProvider = ({ children }: { children: ReactNode }) => {
   return (
     <CurrentDateContext.Provider value={{ currentDate, setCurrentDate, changeWeek }}>
       <CurrentClienteContext.Provider value={{ cliente, role, setCliente, setRole, getToken, saveToken }}>
-        <CurrentAdminOrUserContext.Provider value={{loadingFuncionario, role, email, nome, id, setEmail, setNome, setRole, setId, getToken, saveToken, getUserData, Logout, updateFuncionarios, setLoadingFuncionario, funcionarios }}>
+        <CurrentAdminOrUserContext.Provider value={{loadingFuncionario, role, email, nome, id, setEmail, setNome, setRole, setId, getToken, saveToken, getUserData, Logout, updateFuncionarios, setLoadingFuncionario, funcionarios, Login }}>
           <FuncionarioContext.Provider value={{funcionario, funcionarios, funcionariosFilter, agendamentos, setAgendamentos, setFuncionario, setFuncionarios, setFuncionariosFilter, getAgendamentosByFuncionario, getUserData, getToken, getFuncionarioById, updateFuncionario}}>
             {children}
           </FuncionarioContext.Provider>

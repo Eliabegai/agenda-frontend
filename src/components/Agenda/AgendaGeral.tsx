@@ -100,7 +100,6 @@ export default function AgendaGeral() {
   }
 
   const getAgendamentosPorDataHora = async (dataHora: string) => {
-    console.log(dataHora)
 
     if (!token) {
       toast.error('Token não encontrado');

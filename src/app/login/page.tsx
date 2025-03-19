@@ -24,17 +24,12 @@ const FormSchema = z.object({
   password: z.string().min(5,{message: "Mínimo 5 caracteres"})
 })
 
-
-interface ILogin {
-  access_token: string
-}
-
 export default function Agenda() {
 
   const router = useRouter()
   const url = process.env.NEXT_PUBLIC_API_URL
 
-  const { setEmail, setNome, setRole, setId, getToken, saveToken, getUserData } = useCurrentAdminOrUser()
+  const { setEmail, setNome, setRole, setId, getToken, saveToken, getUserData, Login } = useCurrentAdminOrUser()
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
@@ -64,23 +59,23 @@ export default function Agenda() {
     saveToken(token)
   }
 
-  const login = async (body: any) => {
-    const response = await fetch(`${url}/auth/login`, { 
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(body)
-     }).catch((error) => {
-      console.error(error)
-     })
+  // const login = async (body: {email:string, senha:string}) => {
+  //   const response = await fetch(`${url}/auth/login`, { 
+  //     method: "POST",
+  //     headers: {
+  //       "Content-Type": "application/json",
+  //     },
+  //     body: JSON.stringify(body)
+  //    }).catch((error) => {
+  //     console.error(error)
+  //    })
 
-     if(response?.status === 201) {
-      return response.json()
-     } else {
-      return null
-     }
-  }
+  //    if(response?.status === 201) {
+  //     return response.json()
+  //    } else {
+  //     return null
+  //    }
+  // }
 
   const onSubmit = async (data: z.infer<typeof FormSchema>) => {
 
@@ -89,7 +84,8 @@ export default function Agenda() {
       "senha": data.password
     }
 
-    const response: ILogin = await login(body)
+    const response: ILogin | null = await Login(body)
+    if(!response) return
 
     if(typeof response.access_token === "string") {
       const token = response?.access_token

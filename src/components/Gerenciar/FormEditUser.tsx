@@ -123,8 +123,6 @@ const FormEditUser = ({ onSubmit, cancel, userData }:FormUserProps) => {
     preencherDados(userData)
   },[userData])
 
-  console.log(form.watch('role'))
-
   return(
     <div className='flex flex-col w-full h-full justify-center items-center p-2'>
       <div className='flex flex-col w-full justify-center items-center'>
