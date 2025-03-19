@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Eye } from "lucide-react";
+import { ChevronLeft, ChevronRight, Eye, XIcon } from "lucide-react";
 import { format, startOfWeek, addHours} from "date-fns";
 import { ptBR } from "date-fns/locale/pt-BR";
 import { useCurrentAdminOrUser, useCurrentDate } from '../hooks/PageContext';
@@ -10,7 +10,31 @@ import { toast } from 'sonner';
 import { Modal } from '../Dialog/Modal';
 import VisualizarAgenda from './VisualizaraAgenda';
 import { gerarHorarios, returnNextSevenDays } from '@/utils/gerarHorarios';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../ui/dialog';
+import { cva, type VariantProps } from "class-variance-authority"
+import { cn } from '@/lib/utils';
+import { ScrollArea } from '../ui/scroll-area';
 
+const fullScreenDialogVariants = cva(`
+    fixed inset-0 z-50 
+    flex flex-col bg-background shadow-lg animate-in
+    data-[state=open]:animate-in 
+    data-[state=closed]:animate-out 
+    data-[state=closed]:fade-out-0 
+    data-[state=open]:fade-in-0
+  `,
+  {
+    variants: {
+      position: {
+        default: "data-[state=open]:slide-in-from-bottom-full",
+        top: "data-[state=open]:slide-in-from-top-full",
+      },
+    },
+    defaultVariants: {
+      position: "default",
+    },
+  },
+)
 
 interface DateInfo {
   dayOfWeek: string;
@@ -55,7 +79,7 @@ export default function AgendaGeral() {
           "Content-Type": "application/json",
           'token': token,
           'admin': email
-        },
+        }
       })
       if(!response.ok) {
         const errorData = await response.json()
@@ -76,6 +100,7 @@ export default function AgendaGeral() {
   }
 
   const getAgendamentosPorDataHora = async (dataHora: string) => {
+    console.log(dataHora)
 
     if (!token) {
       toast.error('Token não encontrado');
@@ -156,9 +181,21 @@ export default function AgendaGeral() {
         <Button variant="ghost" onClick={() => changeWeek(1)}><ChevronRight /></Button>
       </div>
 
-      <Modal open={openForm} openChange={() => setOpenForm(!openForm)} title='Visualizar Agendar'>
-        <VisualizarAgenda agendamentos={agendamentosFiltrados} />
-      </Modal>
+      <div>
+        <Dialog open={openForm} onOpenChange={() => setOpenForm(!openForm)}>
+          <DialogContent className='sm:max-w-lg md:max-w-xl lg:max-w-4xl xl:max-w-[90%] max-h-[90%] truncate overflow-auto'> 
+          <DialogHeader className='sticky z-10 top-0 flex flex-row justify-between'>
+            <DialogTitle>Visualizar Agenda</DialogTitle>
+          </DialogHeader>
+          <DialogDescription className='hidden'></DialogDescription>
+          <div className='flex w-full h-full justify-center items-center pb-6 overflow-auto truncate'>
+            <ScrollArea>
+              <VisualizarAgenda agendamentos={agendamentosFiltrados} updateAgendamento={getAgendamentosPorDataHora} />
+            </ScrollArea>
+          </div>
+          </DialogContent>
+        </Dialog>
+      </div>
 
       <div className="flex flex-col h-full">
         <table className="w-full border-separate border-spacing-1 p-2 items-center">

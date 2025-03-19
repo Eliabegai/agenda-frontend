@@ -1,21 +1,22 @@
+import { ScrollArea } from '../ui/scroll-area';
 import CardAgenda from './CardAgenda';
 
 interface VisualizarAgendaProps {
   agendamentos: IAgendamento[]
+  updateAgendamento: (dataHora:string) => void
 }
 
-const VisualizarAgenda = ({agendamentos}: VisualizarAgendaProps) => {
+const VisualizarAgenda = ({agendamentos, updateAgendamento}: VisualizarAgendaProps) => {
 
   return(
-    <div>
-      <div className='flex flex-col w-full space-y-3 p-2 overflow-auto h-96'>
-        {agendamentos?.map((agenda) => (
-          <CardAgenda
-            key={agenda.id}
-            agenda={agenda}
-          />
-        ))}
-      </div>
+    <div className='flex flex-wrap w-full h-full justify-center items-center gap-4 overflow-auto'>
+      {agendamentos?.map((agenda) => (
+        <CardAgenda
+          key={agenda.id}
+          agenda={agenda}
+          updateAgendamento={updateAgendamento}
+        />
+      ))}
     </div>
   )
 }
