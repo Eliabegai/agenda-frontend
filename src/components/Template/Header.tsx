@@ -15,7 +15,7 @@ const Header = () => {
   const router = useRouter()
   const { getToken, Logout } = useCurrentAdminOrUser()
   const [open, setOpen] = useState<boolean>(false)
-  const token = getToken()
+  const token = getToken() || null
   
   const handleLogin = () => {
     router.push('/login')

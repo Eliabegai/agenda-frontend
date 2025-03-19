@@ -82,6 +82,15 @@ export const ContextProvider = ({ children }: { children: ReactNode }) => {
   const [loadingFuncionario, setLoadingFuncionario] = useState<boolean>(false)
   const url = process.env.NEXT_PUBLIC_API_URL
 
+  function clearFields() {
+    setFuncionarios([])
+    setFuncionario(null)
+    setFuncionariosFilter([])
+    setAgendamentos([])
+    sessionStorage.clear()
+    localStorage.removeItem('user')
+  }
+
   useEffect(() => {
     const storadCliente = localStorage.getItem('cliente')
     const storadUser = localStorage.getItem('user')
@@ -211,8 +220,7 @@ export const ContextProvider = ({ children }: { children: ReactNode }) => {
         )
       })
 
-      sessionStorage.clear()
-      localStorage.removeItem('user')
+      clearFields()
     } catch (error) {
       console.error('Erro ao buscar os dados', error)
       toast.error('Erro ao buscar os dados')

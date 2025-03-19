@@ -1,22 +1,14 @@
-'use client'
+
 import Pagina from '@/components/Template/Pagina';
-import { ModeToggle } from '@/components/ModeToggle/modeToggler';
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import Image from 'next/image';
+import { redirect } from 'next/navigation';
+import imagem from '../assets/image.png'
 
 export default function Home() {
-  const router = useRouter()
-  
-  useEffect(() => {
-    router.push('/agenda')
-  },[])
-
-  return (
+  redirect("/agenda")
+  return(
     <Pagina>
-      <div>
-        <h1>Agenda</h1>
-        <ModeToggle />
-      </div>
+      <Image src={imagem} alt='Agenda' />
     </Pagina>
-  );
+  )
 }

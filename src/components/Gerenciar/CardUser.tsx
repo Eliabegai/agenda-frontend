@@ -79,7 +79,7 @@ export default function CardUser({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
       whileHover={{ y: 5 }}
-      className="w-full max-w-sm"
+      className="w-full max-w-xl"
     >
       <Card className={`overflow-hidden ${indisponivel ? "border-destructive/50" : "border-border"}`}>
           {indisponivel && (
@@ -145,11 +145,6 @@ export default function CardUser({
                   </DropdownMenu>
                 </TooltipProvider>
               </div>
-
-              {/* <div className="flex items-center text-sm text-muted-foreground">
-                <Mail className="mr-1 h-3.5 w-3.5" />
-                <span className="line-clamp-1 truncate">{funcionario.email}</span>
-              </div> */}
 
               <TooltipProvider>
                 <Tooltip>
