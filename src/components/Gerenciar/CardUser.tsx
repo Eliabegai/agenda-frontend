@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { format } from "date-fns"
-import { Ban, Calendar, Clock, Mail, MoreHorizontal, Pencil, Trash } from "lucide-react"
+import { Ban, Calendar, Clock, Copy, Mail, MoreHorizontal, Pencil, Trash } from "lucide-react"
 import { motion } from "framer-motion"
 import { Card, CardContent } from '../ui/card'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip'
@@ -10,6 +10,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { Button } from '../ui/button'
 import { Badge } from '../ui/badge'
 import { Avatar, AvatarFallback } from '../ui/avatar'
+import { toast } from 'sonner'
 
 
 interface CardUserProps {
@@ -28,6 +29,7 @@ export default function CardUser({
 
   const [indisponibilidade, setIndisponibilidade] = useState<string>("")
   const [indisponivel, setIndisponivel] = useState(false)
+  const [copied, setCopied] = useState(false);
 
   const getInitials = (name: string) => {
     return name
@@ -55,10 +57,22 @@ export default function CardUser({
     }
   }
 
+  const handleCopy = async (email: string) => {
+    try {
+      await navigator.clipboard.writeText(email);
+      setCopied(true);
+      toast.success('Copiado email!')
+      setTimeout(() => setCopied(false), 2000); // Reseta o estado após 2 segundos
+    } catch (error) {
+      console.error("Erro ao copiar o e-mail:", error);
+    }
+  };
+
   useEffect(() => {
     const indisponivel = isIndisponivel()
     setIndisponivel(indisponivel)
   }, [funcionario])
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -77,7 +91,7 @@ export default function CardUser({
             </div>
           )}
 
-        <CardContent className="p-6 -mt-2">
+        <CardContent className="px-4 py-1">
           <div className="flex items-start gap-4">
             <Avatar className="h-16 w-16 border-2 border-primary/10">
               <AvatarFallback className="bg-primary/5 text-primary">{getInitials(funcionario.nome)}</AvatarFallback>
@@ -132,15 +146,30 @@ export default function CardUser({
                 </TooltipProvider>
               </div>
 
-              <div className="flex items-center text-sm text-muted-foreground">
+              {/* <div className="flex items-center text-sm text-muted-foreground">
                 <Mail className="mr-1 h-3.5 w-3.5" />
-                <span className="line-clamp-1">{funcionario.email}</span>
-              </div>
+                <span className="line-clamp-1 truncate">{funcionario.email}</span>
+              </div> */}
+
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="ghost" className="flex items-center text-sm text-muted-foreground" onClick={() => handleCopy(funcionario.email)}>
+                      <Mail className="h-3.5 w-3.5" />
+                      <span className="w-20 lg:w-36 line-clamp-1 truncate">{funcionario.email}</span>
+                      <Copy className="ml-1 h-3.5 w-3.5 opacity-50" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{copied ? "Copiado!" : "Copiar e-mail"}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
 
               <div className="flex items-center justify-between pt-2">
                 <Badge variant={funcionario.role === "ADMIN" ? "default" : "outline"}>{funcionario.role}</Badge>
 
-                <div className="flex gap-1">
+                <div className="hidden lg:flex gap-1">
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -182,7 +211,7 @@ export default function CardUser({
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button
-                          variant="outline"
+                          variant="destructive"
                           size="icon"
                           className="h-8 w-8"
                           onClick={() => handleRemoveUser(funcionario.id)}

@@ -1,5 +1,5 @@
 'use client'
-import React, { ReactNode } from 'react';
+import React, { ReactNode, useEffect } from 'react';
 import {Sidebar, SidebarCliente} from './Sidebar';
 import Header from './Header';
 import { useCurrentCliente } from '../hooks/PageContext';
@@ -11,6 +11,10 @@ type PaginaProps = {
 
 const Pagina = (props: PaginaProps) => {
   const {role} = useCurrentCliente()
+
+  useEffect(() => {
+
+  },[role])
 
   return (
     <div className="flex flex-col m-auto px-4 py-2 w-full h-screen absolute">

@@ -1,6 +1,6 @@
 'use client'
 
-import { KeyboardEvent, useState } from 'react'
+import { KeyboardEvent, useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { useCurrentAdminOrUser, useFuncionarioContext } from '../hooks/PageContext'
 import { useRouter } from 'next/navigation'
@@ -8,13 +8,12 @@ import { PlusCircle, Search } from 'lucide-react'
 import CardUser from './CardUser'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
-import { Modal } from '../Dialog/Modal'
 import FormUser from './FormUser'
 import FormEditUser from './FormEditUser'
 import FormIndisponivelUser from './FormIndisponivelUser'
 import { DeleteConfirmationDialog } from './DeleteConfirmation'
 import { ScrollArea } from '../ui/scroll-area'
-import { Dialog, DialogContent } from '../ui/dialog'
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from '../ui/dialog'
 import SkeletonFuncionarioForm from '../Skeletons/SkeletonFuncionarioForm'
 import SkeletonFuncionariosList from '../Skeletons/SkeletonFuncionarioList'
 import SkeletonDeleteFuncionario from '../Skeletons/SkeletonDeleteFuncionario'
@@ -36,11 +35,10 @@ const Usuarios = () => {
   const [loading, setLoading] = useState<boolean>(false)
   const [loadingDelete, setLoadingDelete] = useState<boolean>(false)
 
-
-  // useEffect(() => {
-  //   if(role !== 'ADMIN')
-  //     router.push('/agenda')
-  // },[])
+  useEffect(() => {
+    if(role !== 'ADMIN')
+      router.push('/agenda')
+  },[])
 
   const getUserByName = async (nome: string) => {
     if (!token) {
@@ -324,7 +322,7 @@ const Usuarios = () => {
     <div className='flex flex-col w-full h-full p-2 items-center justify-center gap-4'>
 
       <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
-        <div className="relative w-full max-w-lg">
+        <div className="flex w-full max-w-lg relative">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             type="search"
@@ -346,40 +344,54 @@ const Usuarios = () => {
         </div>
       </div>
 
-      <Dialog open={loading}>
-        <DialogContent>
-          <SkeletonFuncionarioForm />
-        </DialogContent>
-      </Dialog>
-      <Dialog open={loadingDelete}>
-        <DialogContent>
-          <SkeletonDeleteFuncionario />
-        </DialogContent>
-      </Dialog>
+      <div>
+        <Dialog open={loading}>
+          <DialogTitle></DialogTitle>
+          <DialogDescription></DialogDescription>
+          <DialogContent>
+            <SkeletonFuncionarioForm />
+          </DialogContent>
+        </Dialog>
 
-      <Dialog open={openCreate} onOpenChange={() => setOpenCreate(!openCreate)}>
-        <DialogContent>
-          <FormUser onSubmit={onSubmitUser} cancel={() => setOpenCreate(!openCreate)} loading={isLoading} />
-        </DialogContent>
-      </Dialog>
+        <Dialog open={loadingDelete}>
+          <DialogTitle></DialogTitle>
+          <DialogDescription></DialogDescription>
+          <DialogContent>
+            <SkeletonDeleteFuncionario />
+          </DialogContent>
+        </Dialog>
 
-      <Dialog open={openEdit} onOpenChange={() => setOpenEdit(!openEdit)}>
-        <DialogContent>
-          <FormEditUser onSubmit={submitEditUser} cancel={() => setOpenEdit(!openEdit)} userData={funcionario} />
-        </DialogContent>
-      </Dialog>
+        <Dialog open={openCreate} onOpenChange={() => setOpenCreate(!openCreate)}>
+          <DialogTitle></DialogTitle>
+          <DialogDescription></DialogDescription>
+          <DialogContent>
+            <FormUser onSubmit={onSubmitUser} cancel={() => setOpenCreate(!openCreate)} loading={isLoading} />
+          </DialogContent>
+        </Dialog>
 
-      <Dialog open={openIndisponivel} onOpenChange={() => setOpenIndisponivel(!openIndisponivel)}>
-        <DialogContent>
-        <FormIndisponivelUser 
-          onSubmit={submitIndisponivel} 
-          id={idUsuario} 
-          cancel={() => setOpenIndisponivel(!openIndisponivel)}
-        />
-        </DialogContent>
-      </Dialog>
+        <Dialog open={openEdit} onOpenChange={() => setOpenEdit(!openEdit)}>
+          <DialogTitle></DialogTitle>
+          <DialogDescription></DialogDescription>
+          <DialogContent>
+            <FormEditUser onSubmit={submitEditUser} cancel={() => setOpenEdit(!openEdit)} userData={funcionario} />
+          </DialogContent>
+        </Dialog>
 
-      <DeleteConfirmationDialog open={openRemove} onDelete={submitRemoveUser} funcionario={funcionario} onOpenChange={() => setOpenRemove(!openRemove)} />
+        <Dialog open={openIndisponivel} onOpenChange={() => setOpenIndisponivel(!openIndisponivel)}>
+          <DialogTitle></DialogTitle>
+          <DialogDescription></DialogDescription>
+          <DialogContent>
+            <FormIndisponivelUser 
+              onSubmit={submitIndisponivel} 
+              id={idUsuario} 
+              cancel={() => setOpenIndisponivel(!openIndisponivel)}
+            />
+          </DialogContent>
+        </Dialog>
+
+        <DeleteConfirmationDialog open={openRemove} onDelete={submitRemoveUser} funcionario={funcionario} onOpenChange={() => setOpenRemove(!openRemove)} />
+      </div>
+
 
       <div className='flex flex-col w-full h-full p-4'>
         { 
@@ -394,7 +406,7 @@ const Usuarios = () => {
           ) : (
             loadingFuncionario  ? <SkeletonFuncionariosList /> :
             <ScrollArea className="h-[calc(100vh-220px)]">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-6">
+              <div className="grid grid-cols-1  md:grid-cols-2 lg:grid-cols-3 gap-3 pb-4">
                 {
                 (userFilter ? funcionariosFilter : funcionarios).map((funcionario) => (
                   <CardUser

@@ -30,6 +30,8 @@ interface CurrentAdminOrUserProps {
   nome: string
   email: string
   id: string
+  funcionarios: IFuncionario[]
+  loadingFuncionario: boolean
   setNome: (nome: string) => void
   setId: (id: string) => void
   setEmail: (email: string) => void
@@ -39,8 +41,6 @@ interface CurrentAdminOrUserProps {
   saveToken: (token: string) => void
   Logout: () => void
   updateFuncionarios: () => void
-  funcionarios: IFuncionario[]
-  loadingFuncionario: boolean
   setLoadingFuncionario: (state: boolean) => void
 }
 
@@ -138,16 +138,47 @@ export const ContextProvider = ({ children }: { children: ReactNode }) => {
   }
 
   const getToken = () => {
-    return sessionStorage.getItem('token')
+    const token = sessionStorage?.getItem('token') || null
+    return token
   }
 
   const setRole = (role: string) => {
     setRoleState(role)
   }
 
-  const Logout = () => {
-    sessionStorage.clear()
-    localStorage.removeItem('user')
+  const Logout = async () => {
+ 
+    const token = getToken()
+    if (!token) {
+      toast.error('Token não encontrado');
+      return;
+    }
+    
+    try {
+      const response = await fetch(`${url}/auth/logout`, {
+        method: 'POST',
+        headers: {
+          "Content-Type": "application/json",
+          'token': token
+        },
+      })
+
+      if(!response.ok) {
+        const errorData = await response.json()
+        toast.error('Erro ao Cadastrar Reunião', {
+          description: (
+          <span>{errorData.message || errorData.error}</span>
+          )
+        })
+        throw new Error(errorData.message || errorData.error || 'Tente novamente mais tarde.')
+      }
+
+      sessionStorage.clear()
+      localStorage.removeItem('user')
+    } catch (error) {
+      console.error('Erro ao buscar os dados', error)
+      toast.error('Erro ao buscar os dados')
+    }
   }
 
   const updateFuncionarios = async () => {
@@ -257,6 +288,11 @@ export const ContextProvider = ({ children }: { children: ReactNode }) => {
       toast.error('Erro ao buscar os dados')
     }
   }
+  
+  const saveInStorageFuncionario = () => {
+    if(funcionario)
+      saveInStorage(funcionario.nome, funcionario.role, funcionario?.email, funcionario.id)
+  }
 
   const updateFuncionario = async (id: string) => {
     const token = getToken()
@@ -279,6 +315,8 @@ export const ContextProvider = ({ children }: { children: ReactNode }) => {
     } catch (error) {
       console.error('Erro ao buscar os dados', error)
       toast.error('Erro ao buscar os dados')
+    } finally {
+      saveInStorageFuncionario()
     }
   }
 
@@ -286,11 +324,6 @@ export const ContextProvider = ({ children }: { children: ReactNode }) => {
     const storageItens = { 'user': nome, 'role': role, 'email': email, 'id': id }
     localStorage.setItem('user', JSON.stringify(storageItens))
   }
-
-  useEffect(() => {
-    if(funcionario)
-      saveInStorage(funcionario.nome, funcionario.role, funcionario?.email, funcionario.id)
-  },[funcionario])
 
   return (
     <CurrentDateContext.Provider value={{ currentDate, setCurrentDate, changeWeek }}>

@@ -9,12 +9,14 @@ import { z } from 'zod'
 import { useEffect, useState } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { IMaskInput } from 'react-imask'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 
 
 const schema = z.object({
   nome: z.string().nonempty('Nome é obrigatório'),
   email: z.string().email('Email inválido').nonempty('Email é obrigatório'),
   // senha: z.string().min(5,{message: "Mínimo 5 caracteres"}),
+  role: z.string().nonempty('Cargo é obrigatório'),
   horarios: z.array(
     z.object({
       diaSemana: z.number(),
@@ -44,6 +46,7 @@ const FormEditUser = ({ onSubmit, cancel, userData }:FormUserProps) => {
     defaultValues: {
       nome: '',
       email: '',
+      role: 'USER',
       // senha: '',
       horarios: [
         { diaSemana: 1, id: '', startTime: '', breakStart: '', breakEnd: '', endTime: '', active: false },
@@ -84,7 +87,7 @@ const FormEditUser = ({ onSubmit, cancel, userData }:FormUserProps) => {
       "nome": data.nome,
       "email": data.email,
       // "senha": data.senha,
-      "role": "USER",
+      "role": data.role,
       "horarios": data.horarios
     }
     onSubmit(userData.id, body)
@@ -93,6 +96,7 @@ const FormEditUser = ({ onSubmit, cancel, userData }:FormUserProps) => {
   const preencherDados = (user: IFuncionario) => {
     form.setValue('nome', user.nome)
     form.setValue('email', user.email)
+    form.setValue('role', user.role)
 
     const horarios = user.horarios
 
@@ -119,6 +123,8 @@ const FormEditUser = ({ onSubmit, cancel, userData }:FormUserProps) => {
     preencherDados(userData)
   },[userData])
 
+  console.log(form.watch('role'))
+
   return(
     <div className='flex flex-col w-full h-full justify-center items-center p-2'>
       <div className='flex flex-col w-full justify-center items-center'>
@@ -129,11 +135,12 @@ const FormEditUser = ({ onSubmit, cancel, userData }:FormUserProps) => {
         <form onSubmit={form.handleSubmit(handleSubmit)}>
           <div className='flex flex-col space-y-2 mt-4'>
               <div className='flex flex-col w-full space-y-2 p-2'>
-                  <FormField 
+                <div className='flex w-full items-start space-x-2'>
+                  <FormField
                     name='nome'
                     control={form.control}
                     render={({ field }) => (
-                      <FormItem>
+                      <FormItem className='flex-[3]'>
                         <FormControl>
                           <div className='flex flex-col justify-center w-full max-w-lg items-start gap-1.5'>
                             <Label htmlFor='nome'>Nome</Label>
@@ -145,6 +152,32 @@ const FormEditUser = ({ onSubmit, cancel, userData }:FormUserProps) => {
                       
                     )}
                   />
+
+                  <FormField 
+                    name='role'
+                    control={form.control}
+                    render={({ field }) => (
+                      <FormItem className='flex-[1]'>
+                        <FormControl>
+                          <div className='flex flex-col justify-center w-full max-w-lg items-start gap-1.5'>
+                            <Label htmlFor='email'>Cargo</Label>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <SelectTrigger className='flex w-full'>
+                                <SelectValue placeholder="Cargo" />
+                              </SelectTrigger>
+                              <SelectContent className='flex w-full'>
+                                <SelectItem value='USER'>User</SelectItem>
+                                <SelectItem value='ADMIN'>Admin</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
                   <FormField 
                     name='email'
                     control={form.control}
@@ -160,6 +193,7 @@ const FormEditUser = ({ onSubmit, cancel, userData }:FormUserProps) => {
                       </FormItem>
                   )}
                   />
+                  
                   {/* <FormField 
                     name='senha'
                     control={form.control}
