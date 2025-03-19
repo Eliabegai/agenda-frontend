@@ -55,8 +55,10 @@ export default function Agenda() {
 
   const saveInStorage = (nome: string, role: string, email:string, id:string, token: string) => {
     const storageItens = { 'user': nome, 'role': role, 'email': email, 'id': id }
-    localStorage.setItem('user', JSON.stringify(storageItens))
-    saveToken(token)
+    if (typeof window !== "undefined") {
+      localStorage.setItem('user', JSON.stringify(storageItens))
+      saveToken(token)
+    }
   }
 
   const onSubmit = async (data: z.infer<typeof FormSchema>) => {

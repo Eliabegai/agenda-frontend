@@ -87,28 +87,32 @@ export const ContextProvider = ({ children }: { children: ReactNode }) => {
     setFuncionario(null)
     setFuncionariosFilter([])
     setAgendamentos([])
-    sessionStorage.clear()
-    localStorage.removeItem('user')
+    if (typeof window !== "undefined") {
+      sessionStorage.clear()
+      localStorage.removeItem('user')
+    }
   }
 
   useEffect(() => {
-    const storadCliente = localStorage.getItem('cliente')
-    const storadUser = localStorage.getItem('user')
-    const token = sessionStorage.getItem('token')
-    
-    if(!token) {
-      localStorage.removeItem('user')
-    }
-
-    if(storadCliente) {
-      setClienteState(storadCliente)
-    }
-
-    if (storadUser) {
-      const userData = JSON.parse(storadUser);
-      setNomeState(userData.user);
-      setRoleState(userData.role);
-      setEmailState(userData.email);
+    if (typeof window !== "undefined") {
+      const storadCliente = localStorage.getItem('cliente')
+      const storadUser = localStorage.getItem('user')
+      const token = sessionStorage.getItem('token')
+      
+      if(!token) {
+        localStorage.removeItem('user')
+      }
+  
+      if(storadCliente) {
+        setClienteState(storadCliente)
+      }
+  
+      if (storadUser) {
+        const userData = JSON.parse(storadUser);
+        setNomeState(userData.user);
+        setRoleState(userData.role);
+        setEmailState(userData.email);
+      }
     }
   },[])
 
@@ -131,10 +135,13 @@ export const ContextProvider = ({ children }: { children: ReactNode }) => {
   }
 
   const getUserData = () => {
-    const storadUser = localStorage.getItem('user')
-    if(storadUser) {
-      const user = JSON.parse(storadUser)
-      return user
+    if (typeof window !== "undefined") {
+      const storadUser = localStorage.getItem('user')
+      
+      if(storadUser) {
+        const user = JSON.parse(storadUser)
+        return user
+      }
     }
     return null
   }
@@ -371,7 +378,9 @@ export const ContextProvider = ({ children }: { children: ReactNode }) => {
 
   const saveInStorage = (nome: string, role: string, email:string, id:string) => {
     const storageItens = { 'user': nome, 'role': role, 'email': email, 'id': id }
-    localStorage.setItem('user', JSON.stringify(storageItens))
+    if (typeof window !== "undefined") {
+      localStorage.setItem('user', JSON.stringify(storageItens))
+    }
   }
 
   return (
