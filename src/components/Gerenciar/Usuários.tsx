@@ -23,8 +23,8 @@ const Usuarios = () => {
   const router = useRouter()
   const { role, email, getToken, updateFuncionarios, loadingFuncionario } = useCurrentAdminOrUser()
   const {funcionariosFilter, funcionario, funcionarios, setFuncionario, setFuncionariosFilter} = useFuncionarioContext()
+  const [token, setToken] = useState<string | null>(null)
   const url = process.env.NEXT_PUBLIC_API_URL
-  const token = typeof window !== 'undefined' ? getToken() : null
   const [userFilter, setUserFilter] = useState('')
   const [openCreate, setOpenCreate] = useState<boolean>(false)
   const [openEdit, setOpenEdit] = useState<boolean>(false)
@@ -38,6 +38,13 @@ const Usuarios = () => {
   useEffect(() => {
     if(role !== 'ADMIN')
       router.push('/agenda')
+  },[])
+
+  useEffect(() => {
+  if(typeof window !== 'undefined') {
+    setToken(getToken())
+  }
+   
   },[])
 
   const getUserByName = async (nome: string) => {

@@ -148,8 +148,11 @@ export const ContextProvider = ({ children }: { children: ReactNode }) => {
   }
 
   const getToken = () => {
-    const token = sessionStorage?.getItem('token') || null
-    return token
+    if(typeof window !== 'undefined') {
+      const token = sessionStorage?.getItem('token') || null
+      return token
+    }
+    return null
   }
 
   const setRole = (role: string) => {
