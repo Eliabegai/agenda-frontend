@@ -59,24 +59,6 @@ export default function Agenda() {
     saveToken(token)
   }
 
-  // const login = async (body: {email:string, senha:string}) => {
-  //   const response = await fetch(`${url}/auth/login`, { 
-  //     method: "POST",
-  //     headers: {
-  //       "Content-Type": "application/json",
-  //     },
-  //     body: JSON.stringify(body)
-  //    }).catch((error) => {
-  //     console.error(error)
-  //    })
-
-  //    if(response?.status === 201) {
-  //     return response.json()
-  //    } else {
-  //     return null
-  //    }
-  // }
-
   const onSubmit = async (data: z.infer<typeof FormSchema>) => {
 
     const body = {
