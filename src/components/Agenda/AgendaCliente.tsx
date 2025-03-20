@@ -16,6 +16,9 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { gerarHorarios, returnNextSevenDays } from '@/utils/gerarHorarios';
 import { Dialog, DialogContent, DialogDescription } from '../ui/dialog';
 import { DialogTitle } from '@radix-ui/react-dialog';
+import { useAppointments } from '../hooks/use-appointments';
+import AppointmentDetails from './appointment-details';
+import { Badge } from '../ui/badge';
 
 interface DateInfo {
   dayOfWeek: string;
@@ -48,7 +51,8 @@ export default function AgendaCliente() {
   const [agendamentosPorHorario, setAgendamentosPorHorario] = useState<{ [key: string]: number }>({});
   const [loading, setLoading] = useState<boolean>(false)
 
-  const [agendamentos, setAgendamentos] = useState<IAgendamento[]>([]);
+  const { appointments, lastAppointment, saveAppointment, setLastAppointment } = useAppointments()
+  const [showAppointmentDetails, setShowAppointmentDetails] = useState(false)
 
   const url = process.env.NEXT_PUBLIC_API_URL
 
@@ -81,36 +85,6 @@ export default function AgendaCliente() {
 
     setAgendamentosPorHorario(agendamentosAgrupados);
   };
-
-  const getAgendamentos = async () => {
-
-    const startDate = `${dates?.[0]?.fullDate}T10:00:00Z`
-    const endDate = `${dates?.[6]?.fullDate}T10:00:00Z`
-
-    try {
-      const response = await fetch(`${url}/agendamento/filter?start=${startDate}&end=${endDate}`, {
-        method: 'GET',
-        headers: {
-          "Content-Type": "application/json",
-        },
-      })
-      if(!response.ok) {
-        const errorData = await response.json()
-        toast.error('Erro ao Cadastrar Reunião', {
-          description: (
-          <span>{errorData.message || errorData.error}</span>
-          )
-        })
-        throw new Error(errorData.message || errorData.error || 'Tente novamente mais tarde.')
-      }
-      const data = await response.json()
-      setAgendamentos(data.data)
-      toast.success('Agenda atualizada')
-    } catch (error) {
-      console.error('Erro ao buscar os dados', error)
-      toast.error('Erro ao buscar os dados')
-    }
-  }
 
   const handleClickDialog = () => {
     setCliente(nome)
@@ -156,11 +130,22 @@ export default function AgendaCliente() {
         throw new Error(errorData.message || errorData.error || 'Erro ao realizar o agendamento. Tente novamente mais tarde.')
       }
 
+      const appointmentData = await response.json()
+      
+      saveAppointment(appointmentData)
+
+      agruparAgendamentosPorHorario([appointmentData])
+
+
       toast.success('Agendamento realizado com sucesso!',{
         description: (
-          <span>Você receberá um e-mail de confirmação.</span>
+          <div>
+            <span>Agendamento Confirmado.</span>
+            <Button variant={'outline'} onClick={() => setShowAppointmentDetails(!showAppointmentDetails)}>Detalhes</Button>
+
+          </div>
         ),
-        duration: 5000,
+        duration: 10000,
       })
       
     } catch (error) {
@@ -177,7 +162,6 @@ export default function AgendaCliente() {
     
     setTimeout(() => {
       const storadCliente = localStorage.getItem('cliente')
-
       if(!storadCliente)
         setOpenDialog(!openDialong)
     }, 3000)
@@ -191,10 +175,12 @@ export default function AgendaCliente() {
     setHorarios(horarios)
   },[currentDate])
 
-  useEffect(() => {
-    agruparAgendamentosPorHorario(agendamentos);
-  }, [agendamentos]);
 
+  useEffect(() => {
+    agruparAgendamentosPorHorario(appointments);
+  }, [appointments]);
+  
+  console.log('agendamentosPorHorario', agendamentosPorHorario)
   
   return (
     <div className="flex flex-col w-full p-4 rounded-xl shadow-md left-0 top-0 absolute">
@@ -207,10 +193,7 @@ export default function AgendaCliente() {
         <Input className='text-zinc-800 dark:text-zinc-300' value={nome} placeholder='Seu nome' onChange={(e) => setNome(e.target.value)} type='text' />
       </AlertaDialog>
 
-      <Dialog 
-        open={openForm} 
-        onOpenChange={setOpenForm}
-      >
+      <Dialog open={openForm} onOpenChange={setOpenForm} >
         <DialogTitle></DialogTitle>
         <DialogDescription></DialogDescription>
         <DialogContent>
@@ -246,8 +229,10 @@ export default function AgendaCliente() {
             <tbody>
             { horarios.map((hora, i) => (
                 <tr key={i}>
-                  {
-                    dates.map((dia, j) => {
+                  { dates.map((dia, j) => {
+                      const appointmentKey = `${dia.fullDate} ${hora}`
+                      const hasAppointments = agendamentosPorHorario[appointmentKey] > 0
+                      const appointmentCount = agendamentosPorHorario[appointmentKey] || 0
 
                       return (
                         <td
@@ -255,16 +240,24 @@ export default function AgendaCliente() {
                           className={`
                             text-center border p-2 rounded-lg font-normal hover:bg-primary-foreground
                             ${dia.dayOfWeek === "Dom" ? " bg-zinc-200 opacity-30" : "opacity-100"}
+                            ${hasAppointments ? "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800" : ""}
                         `}
                         >
                           <div className='flex flex-row w-full justify-between items-center space-x-2'>
                               <div className='flex flex-col text-xs'>
                                 <span>{hora}</span>
-                                <span>Agendados</span>
+                                <span className="flex items-center">
+                                  {hasAppointments && (
+                                    <span className="inline-flex items-center justify-center w-5 h-5 mr-1 text-xs font-semibold text-white bg-green-500 rounded-full">
+                                      {appointmentCount}
+                                    </span>
+                                  )}
+                                  Agendados
+                                </span>
                               </div>
                               {
                                 (dia.dayOfWeek === "domingo") ? (
-                                  <span className='text-xl font-normal'>-------</span>
+                                  <span className='text-xl font-normal'>---</span>
                                 ) : (
                                   <>
                                     <span className='font-normal'>{dia.dayOfWeek === "Dom" ? "---" : ""}</span>
@@ -272,7 +265,11 @@ export default function AgendaCliente() {
                                       disabled={dia.dayOfWeek === "Dom"}
                                       size={'icon'}
                                       onClick={() => handleClickForm(hora, dia.fullDate)}
-                                      className='bg-zinc-700 hover:bg-zinc-600 dark:bg-zinc-300 dark:hover:bg-zinc-200'
+                                      className={`
+                                        g-zinc-700 hover:bg-zinc-600 dark:bg-zinc-300 dark:hover:bg-zinc
+                                        ${ hasAppointments ? "bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600"
+                                          : "bg-zinc-700 hover:bg-zinc-600 dark:bg-zinc-300 dark:hover:bg-zinc-200" }
+                                      `}
                                     >
                                       <Pencil size={12} />
                                     </Button>
@@ -289,6 +286,40 @@ export default function AgendaCliente() {
             </tbody>
           </table>
         </div>
+        { showAppointmentDetails && lastAppointment && (
+          <AppointmentDetails appointment={lastAppointment} open={showAppointmentDetails} onClose={() => setShowAppointmentDetails(false)} />
+        )}
+
+        { appointments && !showAppointmentDetails && (
+          <div className='flex flex-col w-full'>
+            <h3 className="text-lg font-bold">Agendamentos:</h3>
+            <div className='flex flex-wrap truncate w-full max-h-72 justify-center items-center overflow-auto space-x-2'>
+              {
+                appointments.map((agenda, index) => (
+                  <div className="mt-4 p-4 w-80 gap-3 border rounded-lg bg-primary-foreground" key={index}>
+                    
+                    <div className="flex flex-col gap-2">
+                      <div className='flex space-x-2 items-center'>
+                        <span className="text-sm font-medium">Protocolo: <Badge variant={'outline'}>{agenda.protocolo?.codigo}</Badge></span>
+                        <span className="text-sm font-medium">Status: <Badge>{agenda.status}</Badge></span>
+                      </div>
+                      <div className='flex gap-2 items-center'>
+                        <span className="text-sm font-medium">Data/Hora:</span>
+                        <span className="font-normal">{new Date(agenda.dataHora).toLocaleString("pt-BR")}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center mt-2 w-full">
+                      <Button variant="outline" size="sm" className='w-full' onClick={() => {setLastAppointment(agenda), setShowAppointmentDetails(true)}}>
+                        Ver detalhes
+                      </Button>
+                    </div>
+
+                  </div>
+                ))
+              }
+            </div>
+          </div>
+        )}
     </div>
   );
 }
